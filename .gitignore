@@ -1,6 +1,6 @@
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -23,3 +23,28 @@ go.work.sum
 
 # env file
 .env
+
+# React specific
+node_modules/
+build/
+dist/
+.npm/
+.cache/
+*.log
+*.lock
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# IDE specific
+.vscode/
+.idea/
+
+# macOS specific
+.DS_Store
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
