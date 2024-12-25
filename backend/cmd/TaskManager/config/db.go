@@ -10,6 +10,14 @@ import (
 
 var DB *sql.DB
 
+/*
+ConnectDB establishes a connection to a PostgreSQL database using environment variables for authentication.
+
+Returns:
+  - Updates the global variable `DB` with the established database connection.
+  - Logs errors and exits the application in case of failures.
+*/
+
 func ConnectDB() {
 	// DB connection info
 	username := os.Getenv("PG_USERNAME")

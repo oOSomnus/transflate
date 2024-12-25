@@ -9,6 +9,13 @@ import (
 	"strings"
 )
 
+/*
+AuthMiddleware is a Gin middleware function for handling JWT-based authentication.
+
+Returns:
+  - (gin.HandlerFunc): A middleware function to be used in the Gin router.
+*/
+
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get token from Authorization Header

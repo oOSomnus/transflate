@@ -2,33 +2,28 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/oOSomnus/transflate/pkg/utils"
 	"github.com/oOSomnus/transflate/services/TaskManager/usecase"
 	"net/http"
-	"os"
-	"time"
 )
 
-type LoginRequest struct {
+type userRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+/*
+Login handles user login by authenticating credentials and generating a JWT token.
 
-func generateToken(username string) (string, error) {
-	// Token created
-	claims := jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(), // Token expired after 24h
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+Parameters:
+  - c (*gin.Context): The Gin context containing the HTTP request and response objects.
 
-	return token.SignedString(jwtSecret)
-}
+Returns:
+  - Responds directly to the HTTP client with appropriate status codes and messages based on the operation's success or failure.
+*/
 
 func Login(c *gin.Context) {
-	var req LoginRequest
+	var req userRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -42,7 +37,7 @@ func Login(c *gin.Context) {
 	}
 
 	// Generate JWT Token
-	token, err := generateToken(req.Username)
+	token, err := utils.GenerateToken(req.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -52,5 +47,31 @@ func Login(c *gin.Context) {
 		"message":  "Login successful",
 		"username": req.Username,
 		"token":    token,
+	})
+}
+
+/*
+Register handles the HTTP request to register a new user.
+
+Parameters:
+  - c (*gin.Context): The context of the current HTTP request, providing request and response handling.
+
+Returns:
+  - (JSON): A success or error message depending on the outcome.
+*/
+
+func Register(c *gin.Context) {
+	var req userRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	err := usecase.CreateUser(req.Username, req.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User created successfully",
 	})
 }

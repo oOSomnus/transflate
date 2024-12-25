@@ -18,6 +18,7 @@ func main() {
 
 	r := gin.Default()
 	r.POST("/login", handlers.Login)
+	r.POST("/register", handlers.Register)
 	auth := r.Group("/")
 	auth.Use(middleware.AuthMiddleware())
 	port := ":8080"
