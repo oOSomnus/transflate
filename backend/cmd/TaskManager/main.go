@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/oOSomnus/transflate/services/TaskManager/handlers"
 	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/cmd/TaskManager/config"
-	"github.com/oOSomnus/transflate/cmd/TaskManager/handlers"
+	"github.com/oOSomnus/transflate/pkg/middleware"
 )
 
 func main() {
@@ -17,6 +18,10 @@ func main() {
 
 	r := gin.Default()
 	r.POST("/login", handlers.Login)
+	auth := r.Group("/")
+	auth.Use(middleware.AuthMiddleware())
+	port := ":8080"
+	log.Printf("Starting server on %s", port)
+	r.Run(port)
 
-	r.Run(":8080")
 }

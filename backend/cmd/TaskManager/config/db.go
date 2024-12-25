@@ -33,6 +33,13 @@ func ConnectDB() {
 		log.Fatalf("Database ping failed: %v", err)
 	}
 
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Fatalf("Closing database failed: %v", err)
+		}
+	}(db)
+
 	log.Println("Connected to the PostgreSQL database!")
 	DB = db
 }
