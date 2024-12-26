@@ -3,14 +3,10 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/pkg/utils"
+	"github.com/oOSomnus/transflate/services/TaskManager/domain"
 	"github.com/oOSomnus/transflate/services/TaskManager/usecase"
 	"net/http"
 )
-
-type userRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
 
 /*
 Login handles user login by authenticating credentials and generating a JWT token.
@@ -23,7 +19,7 @@ Returns:
 */
 
 func Login(c *gin.Context) {
-	var req userRequest
+	var req domain.UserRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -59,9 +55,8 @@ Parameters:
 Returns:
   - (JSON): A success or error message depending on the outcome.
 */
-
 func Register(c *gin.Context) {
-	var req userRequest
+	var req domain.UserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
