@@ -2,6 +2,7 @@ package config
 
 import (
 	"database/sql"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 
@@ -20,11 +21,15 @@ Returns:
 
 func ConnectDB() {
 	// DB connection info
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	username := os.Getenv("PG_USERNAME")
 	password := os.Getenv("PG_PASSWORD")
 	host := "127.0.0.1"
 	port := "5432"
-	dbname := "transflate"
+	dbname := "postgres"
 	sslmode := "disable"
 
 	// DSN
@@ -40,13 +45,6 @@ func ConnectDB() {
 	if err := db.Ping(); err != nil {
 		log.Fatalf("Database ping failed: %v", err)
 	}
-
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			log.Fatalf("Closing database failed: %v", err)
-		}
-	}(db)
 
 	log.Println("Connected to the PostgreSQL database!")
 	DB = db

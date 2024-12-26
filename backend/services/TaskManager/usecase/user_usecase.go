@@ -88,9 +88,7 @@ Parameters:
 
 Returns:
   - (error): An error if the underlying DecreaseBalance call fails, wrapped with additional context.
-
 */
-
 func DecreaseBalance(username string, balance int) error {
 	err := repository.DecreaseBalance(username, balance)
 	if err != nil {

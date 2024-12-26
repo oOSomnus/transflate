@@ -66,7 +66,7 @@ func TaskSubmit(c *gin.Context) {
 	}(conn)
 
 	client := pb.NewOCRServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	response, err := client.ProcessPDF(ctx, &pb.PDFRequest{PdfData: fileContent})
 	if err != nil {

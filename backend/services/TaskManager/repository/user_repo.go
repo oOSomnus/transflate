@@ -19,7 +19,7 @@ Returns:
   - (error): An error if the user is not found or any database issues occur.
 */
 func FindUsrWithUsername(username string) (string, error) {
-	query := "SELECT password FROM users WHERE username = ?"
+	query := "SELECT password FROM users WHERE username = $1"
 	row := config.DB.QueryRow(query, username)
 	var pwd string
 	err := row.Scan(&pwd)
@@ -43,7 +43,7 @@ Returns:
   - (error): An error if there are database-related issues.
 */
 func IfUserExists(username string) (bool, error) {
-	query := "SELECT userid FROM users WHERE username = ?"
+	query := "SELECT userid FROM users WHERE username = $1"
 	row := config.DB.QueryRow(query, username)
 	var userId int
 	err := row.Scan(&userId)
@@ -67,7 +67,7 @@ Returns:
   - (error): Returns an error if the insertion into the database fails, or nil if the operation is successful.
 */
 func CreateUser(username string, password string) error {
-	query := "INSERT INTO users (username, password) VALUES (?, ?)"
+	query := "INSERT INTO users (username, password) VALUES ($1, $2)"
 	_, err := config.DB.Exec(query, username, password)
 	if err != nil {
 		return err
@@ -84,13 +84,12 @@ Parameters:
 
 Returns:
   - (error): An error if any of the following occur:
-      - The balance parameter is invalid (less than or equal to zero).
-      - A transaction cannot be initiated.
-      - The user is not found in the database.
-      - The user has insufficient balance.
-      - There is an error executing the database query to update the balance.
+  - The balance parameter is invalid (less than or equal to zero).
+  - A transaction cannot be initiated.
+  - The user is not found in the database.
+  - The user has insufficient balance.
+  - There is an error executing the database query to update the balance.
 */
-
 func DecreaseBalance(username string, balance int) error {
 	if balance <= 0 {
 		return errors.New("invalid amount")

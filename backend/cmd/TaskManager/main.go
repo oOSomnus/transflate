@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/oOSomnus/transflate/services/TaskManager/handlers"
 	"log"
 
@@ -21,8 +22,14 @@ func main() {
 	r.POST("/register", handlers.Register)
 	auth := r.Group("/")
 	auth.Use(middleware.AuthMiddleware())
+	r.POST("/submit", handlers.TaskSubmit)
 	port := ":8080"
 	log.Printf("Starting server on %s", port)
 	r.Run(port)
-
+	defer func(DB *sql.DB) {
+		err := DB.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(config.DB)
 }
