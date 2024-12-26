@@ -92,7 +92,7 @@ Returns:
 */
 
 func DecreaseBalance(username string, balance int) error {
-	err := DecreaseBalance(username, balance)
+	err := repository.DecreaseBalance(username, balance)
 	if err != nil {
 		return fmt.Errorf("failed to decrease balance: %w", err)
 	}
