@@ -78,3 +78,23 @@ func CreateUser(username string, password string) error {
 
 	return nil
 }
+
+/*
+DecreaseBalance is a wrapper function that calls the primary DecreaseBalance implementation and handles any errors.
+
+Parameters:
+  - username (string): The username of the user whose balance is to be reduced.
+  - balance (int): The amount to be deducted from the user's balance.
+
+Returns:
+  - (error): An error if the underlying DecreaseBalance call fails, wrapped with additional context.
+
+*/
+
+func DecreaseBalance(username string, balance int) error {
+	err := DecreaseBalance(username, balance)
+	if err != nil {
+		return fmt.Errorf("failed to decrease balance: %w", err)
+	}
+	return nil
+}

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package api.ocr;
+
+option go_package = "github.com/oOSomnus/transflate/api/generated/ocr";
+
+service OCRService {
+  rpc ProcessPDF(PDFRequest) returns (StringListResponse);
+}
+
+message PDFRequest {
+  bytes pdf_data = 1;
+}
+
+message StringListResponse {
+  repeated string lines = 1;
+}
