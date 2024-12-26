@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"github.com/oOSomnus/transflate/services/TaskManager/handlers"
+	"github.com/oOSomnus/transflate/internal/TaskManager/handlers"
 	"log"
 
 	"github.com/gin-gonic/gin"

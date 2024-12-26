@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/gin-gonic/gin"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
-	"github.com/oOSomnus/transflate/services/TaskManager/usecase"
+	"github.com/oOSomnus/transflate/internal/TaskManager/usecase"
 	"github.com/pkoukk/tiktoken-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

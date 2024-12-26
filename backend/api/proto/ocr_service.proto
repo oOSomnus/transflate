@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package api.ocr;
+package ocr;
 
 option go_package = "github.com/oOSomnus/transflate/api/generated/ocr";
 
-service OCRService {
+service OCRService  {
   rpc ProcessPDF(PDFRequest) returns (StringListResponse);
 }
 

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/oOSomnus/transflate/services/TaskManager/repository"
+	"github.com/oOSomnus/transflate/internal/TaskManager/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 

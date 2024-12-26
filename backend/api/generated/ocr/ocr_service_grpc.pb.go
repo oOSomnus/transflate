@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OCRService_ProcessPDF_FullMethodName = "/api.ocr.OCRService/ProcessPDF"
+	OCRService_ProcessPDF_FullMethodName = "/ocr.OCRService/ProcessPDF"
 )
 
 // OCRServiceClient is the client API for OCRService service.
@@ -108,7 +108,7 @@ func _OCRService_ProcessPDF_Handler(srv interface{}, ctx context.Context, dec fu
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var OCRService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.ocr.OCRService",
+	ServiceName: "ocr.OCRService",
 	HandlerType: (*OCRServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

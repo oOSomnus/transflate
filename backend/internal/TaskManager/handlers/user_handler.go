@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/oOSomnus/transflate/internal/TaskManager/domain"
+	"github.com/oOSomnus/transflate/internal/TaskManager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
-	"github.com/oOSomnus/transflate/services/TaskManager/domain"
-	"github.com/oOSomnus/transflate/services/TaskManager/usecase"
 	"net/http"
 )
 
