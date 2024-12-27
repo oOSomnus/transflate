@@ -19,6 +19,18 @@ import (
 	"time"
 )
 
+/*
+TaskSubmit handles the task submission process, including PDF file validation, OCR processing, token balance deduction, and text translation.
+
+Parameters:
+  - c (*gin.Context): The HTTP context that contains the request and response writer.
+
+Responses:
+  - 200 OK: Returns the translated text as JSON.
+  - 400 Bad Request: If the uploaded file is invalid or not a PDF.
+  - 401 Unauthorized: If the user is not logged in.
+  - 500 Internal Server Error: For errors during file reading, gRPC communication, token deduction, or other server-side issues.
+*/
 func TaskSubmit(c *gin.Context) {
 	// Check login status
 	username, exists := c.Get("username")

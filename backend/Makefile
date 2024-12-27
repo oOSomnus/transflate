@@ -7,6 +7,7 @@ OUTPUT_DIR := build
 
 # services
 SERVICES := OCRService TranslateService TaskManager
+.DEFAULT_GOAL := help
 
 # default target
 all: proto build

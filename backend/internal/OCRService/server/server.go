@@ -34,7 +34,6 @@ Returns:
   - (*pb.StringListResponse): A response containing a list of strings where each string represents the OCR result for a corresponding page of the PDF.
   - (error): An error if any issues occur during processing, such as file creation, image extraction, or OCR execution.
 */
-
 func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (*pb.StringListResponse, error) {
 	// Create temp folder
 	tmpFile, err := os.CreateTemp("", "input-*.pdf")

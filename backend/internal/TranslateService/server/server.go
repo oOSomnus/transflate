@@ -26,7 +26,7 @@ Returns:
   - (error): An error if the translation process fails or encounters issues.
 */
 func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb.TranslateRequest) (*pb.TranslateResult, error) {
-	longString := "Your long string here. It can be very lengthy."
+	longString := req.Text
 	maxTokens := 1000
 	// partition string
 	chunks := utils.SplitString(longString, maxTokens)
