@@ -6,7 +6,7 @@ set -e
 # Set proto file path
 PROTO_DIR="../api/proto"
 # Set target path
-GENERATED_DIR="../api/generated/ocr"
+GENERATED_DIR="../api/generated"
 
 # Check existence of gen directory
 mkdir -p $GENERATED_DIR
@@ -14,14 +14,16 @@ mkdir -p $GENERATED_DIR
 # Compile
 protoc \
   --proto_path=$PROTO_DIR \
-  --go_out=$GENERATED_DIR --go_opt=paths=source_relative \
-  --go-grpc_out=$GENERATED_DIR --go-grpc_opt=paths=source_relative \
+  --go_out=$GENERATED_DIR/ocr --go_opt=paths=source_relative \
+  --go-grpc_out=$GENERATED_DIR/ocr --go-grpc_opt=paths=source_relative \
   $PROTO_DIR/ocr_service.proto
-#protoc \
-#  --proto_path=$PROTO_DIR \
-#  --go_out=$GENERATED_DIR \
-#  --go-grpc_out=$GENERATED_DIR \
-#  $PROTO_DIR/ocr_service.proto
+
+protoc \
+  --proto_path=$PROTO_DIR \
+  --go_out=$GENERATED_DIR/translate --go_opt=paths=source_relative \
+  --go-grpc_out=$GENERATED_DIR/translate --go-grpc_opt=paths=source_relative \
+  $PROTO_DIR/translate_service.proto
+
 
 # Check result
 if [ $? -eq 0 ]; then

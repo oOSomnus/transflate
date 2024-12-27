@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/gin-gonic/gin"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
+	pbt "github.com/oOSomnus/transflate/api/generated/translate"
 	"github.com/oOSomnus/transflate/internal/TaskManager/usecase"
 	"github.com/pkoukk/tiktoken-go"
 	"golang.org/x/net/context"
@@ -65,16 +66,16 @@ func TaskSubmit(c *gin.Context) {
 		}
 	}(conn)
 
-	client := pb.NewOCRServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-	response, err := client.ProcessPDF(ctx, &pb.PDFRequest{PdfData: fileContent})
+	ocrClient := pb.NewOCRServiceClient(conn)
+	ocrCtx, ocrCancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer ocrCancel()
+	ocrResponse, err := ocrClient.ProcessPDF(ocrCtx, &pb.PDFRequest{PdfData: fileContent})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
 		})
 	}
-	respLines := response.Lines
+	respLines := ocrResponse.Lines
 	//merge strings
 	var builder strings.Builder
 	for _, line := range respLines {
@@ -96,7 +97,25 @@ func TaskSubmit(c *gin.Context) {
 			"error": "Internal server error",
 		})
 	}
-	//TODO: Translate
+	//translate
+	conn, err = grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+	}
+	translateClient := pbt.NewTranslateServiceClient(conn)
+	transCtx, transCancel := context.WithTimeout(context.Background(), 3600*time.Second)
+	defer transCancel()
+	transResponse, err := translateClient.ProcessTranslation(transCtx, &pbt.TranslateRequest{Text: mergedString})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"data": transResponse.Lines,
+	})
 }
 
 /*

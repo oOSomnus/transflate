@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package translate;
+
+option go_package = "github.com/oOSomnus/transflate/api/generated/translate";
+
+service TranslateService{
+  rpc ProcessTranslation(TranslateRequest) returns (TranslateResult);
+}
+
+message TranslateRequest {
+  string text = 1;
+}
+
+message TranslateResult {
+  string lines = 1;
+}
