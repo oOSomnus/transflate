@@ -1,4 +1,4 @@
-package TranslateService
+package main
 
 import (
 	pb "github.com/oOSomnus/transflate/api/generated/translate"

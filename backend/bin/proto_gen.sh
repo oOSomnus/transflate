@@ -4,12 +4,14 @@
 set -e
 
 # Set proto file path
-PROTO_DIR="../api/proto"
+PROTO_DIR="api/proto"
 # Set target path
-GENERATED_DIR="../api/generated"
+GENERATED_DIR="api/generated"
 
 # Check existence of gen directory
 mkdir -p $GENERATED_DIR
+mkdir -p $GENERATED_DIR/ocr
+mkdir -p $GENERATED_DIR/translate
 
 # Compile
 protoc \
