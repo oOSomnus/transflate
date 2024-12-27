@@ -94,6 +94,11 @@ func TaskSubmit(c *gin.Context) {
 		builder.WriteString(line)
 	}
 	mergedString := builder.String()
+	log.Printf("merged string: %s", mergedString)
+	c.JSON(http.StatusOK, gin.H{
+		"data": mergedString,
+	})
+	//--------------------------------below are not tested --------------------------//
 	//tokenize
 	encoder, err := tiktoken.GetEncoding("cl100k_base")
 	if err != nil {

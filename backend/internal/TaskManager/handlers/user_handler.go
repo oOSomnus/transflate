@@ -20,7 +20,6 @@ Returns:
 
 func Login(c *gin.Context) {
 	var req domain.UserRequest
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
