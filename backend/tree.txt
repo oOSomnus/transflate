@@ -22,6 +22,7 @@
 │   │   ├── config
 │   │   └── main.go
 │   ├── TaskManager
+│   │   ├── Dockerfile
 │   │   ├── config
 │   │   │   └── db.go
 │   │   └── main.go
@@ -59,4 +60,4 @@
 │       └── token_gen.go
 └── tree.txt
 
-28 directories, 31 files
+28 directories, 32 files
