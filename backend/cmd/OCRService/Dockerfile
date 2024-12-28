@@ -1,0 +1,89 @@
+# builder
+FROM golang:1.23 AS builder
+
+WORKDIR /app
+
+# copy go dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# install building dependencies
+RUN apt-get update && apt-get install -y \
+    libleptonica-dev \
+    libtesseract-dev \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# copy code & compile
+COPY cmd/OCRService ./cmd/OCRService
+COPY internal ./internal
+COPY pkg ./pkg
+COPY api ./api
+
+RUN GOOS=linux go build -o /app/OCRService ./cmd/OCRService
+
+# Tesseract build
+FROM ubuntu:22.04 AS tesseract_builder
+
+WORKDIR /build
+
+# install Tesseract dependencies
+RUN apt-get update && apt-get install -y \
+    automake \
+    autoconf \
+    libtool \
+    g++ \
+    pkg-config \
+    libpng-dev \
+    libjpeg-dev \
+    libtiff-dev \
+    libicu-dev \
+    zlib1g-dev \
+    libpango1.0-dev \
+    libcairo2-dev \
+    libleptonica-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# copy origin code
+COPY engine/tesseract /build/tesseract
+
+WORKDIR /build/tesseract
+
+RUN apt-get update && apt-get install -y make
+
+# autogen install
+RUN chmod +x ./autogen.sh \
+    && ./autogen.sh \
+    && ./configure --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install \
+    && ldconfig
+
+# runtime image
+FROM ubuntu:22.04
+
+WORKDIR /app
+
+# install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libleptonica-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# merge previous stages
+COPY --from=tesseract_builder /usr/local /usr/local
+
+COPY --from=builder /app/OCRService /app/OCRService
+COPY .env /app/.env
+
+RUN ldconfig
+
+# port
+EXPOSE 50051
+
+# default shell
+SHELL ["/bin/bash", "-c"]
+
+# start the service
+CMD ["/app/OCRService"]

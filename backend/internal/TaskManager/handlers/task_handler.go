@@ -19,6 +19,11 @@ import (
 	"time"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	log.SetPrefix("[Task handler] ")
+}
+
 /*
 TaskSubmit handles the task submission process, including PDF file validation, OCR processing, token balance deduction, and text translation.
 
@@ -33,8 +38,10 @@ Responses:
 */
 func TaskSubmit(c *gin.Context) {
 	// Check login status
+	log.Println("Received new task.")
 	username, exists := c.Get("username")
 	usernameStr, ok := username.(string)
+	log.Println("Validating information ...")
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Invalid username type",
@@ -45,12 +52,14 @@ func TaskSubmit(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "User not authorized to submit task",
 		})
+		return
 	}
 	file, err := c.FormFile("document")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "document invalid",
 		})
+		return
 	}
 	//check whether it's pdf
 	if filepath.Ext(file.Filename) != ".pdf" {
@@ -70,6 +79,7 @@ func TaskSubmit(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
 		})
+		return
 	}
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
@@ -81,25 +91,39 @@ func TaskSubmit(c *gin.Context) {
 	ocrClient := pb.NewOCRServiceClient(conn)
 	ocrCtx, ocrCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer ocrCancel()
+	log.Println("Start processing file ...")
 	ocrResponse, err := ocrClient.ProcessPDF(ocrCtx, &pb.PDFRequest{PdfData: fileContent})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
 		})
+		return
+	}
+	if ocrResponse == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
 	}
 	respLines := ocrResponse.Lines
+	log.Println("File processed successfully.")
 	//merge strings
 	var builder strings.Builder
 	for _, line := range respLines {
 		builder.WriteString(line)
 	}
 	mergedString := builder.String()
+	c.JSON(http.StatusOK, gin.H{
+		"data": mergedString,
+	})
+	return
 	//tokenize
 	encoder, err := tiktoken.GetEncoding("cl100k_base")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
 		})
+		return
 	}
 	tokens := encoder.Encode(mergedString, nil, nil)
 	numTokens := len(tokens)
@@ -108,6 +132,7 @@ func TaskSubmit(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
 		})
+		return
 	}
 	//translate
 	conn, err = grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -115,6 +140,7 @@ func TaskSubmit(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
 		})
+		return
 	}
 	translateClient := pbt.NewTranslateServiceClient(conn)
 	transCtx, transCancel := context.WithTimeout(context.Background(), 3600*time.Second)
@@ -124,10 +150,12 @@ func TaskSubmit(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
 		})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"data": transResponse.Lines,
 	})
+	return
 }
 
 /*

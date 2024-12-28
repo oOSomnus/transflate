@@ -1,0 +1,63 @@
+.
+├── Makefile
+├── api
+│   ├── generated
+│   │   ├── ocr
+│   │   │   ├── ocr_service.pb.go
+│   │   │   └── ocr_service_grpc.pb.go
+│   │   └── translate
+│   │       ├── translate_service.pb.go
+│   │       └── translate_service_grpc.pb.go
+│   └── proto
+│       ├── ocr_service.proto
+│       └── translate_service.proto
+├── bin
+│   └── proto_gen.sh
+├── build
+│   ├── OCRService
+│   ├── TaskManager
+│   └── TranslateService
+├── cmd
+│   ├── OCRService
+│   │   ├── config
+│   │   └── main.go
+│   ├── TaskManager
+│   │   ├── Dockerfile
+│   │   ├── config
+│   │   │   └── db.go
+│   │   └── main.go
+│   └── TranslateService
+│       └── main.go
+├── go.mod
+├── go.sum
+├── internal
+│   ├── OCRService
+│   │   └── server
+│   │       └── server.go
+│   ├── TaskManager
+│   │   ├── domain
+│   │   │   ├── user.go
+│   │   │   └── user_request.go
+│   │   ├── handlers
+│   │   │   ├── task_handler.go
+│   │   │   └── user_handler.go
+│   │   ├── repository
+│   │   │   └── user_repo.go
+│   │   └── usecase
+│   │       └── user_usecase.go
+│   └── TranslateService
+│       ├── domain
+│       │   └── request_entity.go
+│       ├── handlers
+│       │   └── translate_handler.go
+│       └── server
+│           └── server.go
+├── pkg
+│   ├── middleware
+│   │   └── auth.go
+│   └── utils
+│       ├── split_string.go
+│       └── token_gen.go
+└── tree.txt
+
+28 directories, 32 files
