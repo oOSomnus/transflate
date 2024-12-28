@@ -3,19 +3,35 @@ package server
 import (
 	"fmt"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
+	"github.com/oOSomnus/transflate/pkg/utils"
 	"github.com/otiai10/gosseract/v2"
 	"golang.org/x/net/context"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"sync"
 )
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	log.SetPrefix("[OCR Service] ")
+}
+
+func extractPageNumber(filename string) int {
+	re := regexp.MustCompile(`\d+`)
+	match := re.FindString(filename)
+	if match == "" {
+		return -1
+	}
+	num, err := strconv.Atoi(match)
+	if err != nil {
+		return -1
+	}
+	return num
 }
 
 /*
@@ -64,6 +80,9 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 	// Use pdftoppm to convert PDF pages to PNG images
 	log.Println("Converting pdf to png images ...")
 	outputPattern := filepath.Join(outputDir, "page")
+	if err := tmpFile.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close temp file: %v", err)
+	}
 	cmd := exec.Command("pdftoppm", "-png", tmpFile.Name(), outputPattern)
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("failed to run pdftoppm: %v", err)
@@ -77,11 +96,15 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 
 	// Sort files by name (to ensure page order)
 	sort.Slice(files, func(i, j int) bool {
-		return files[i].Name() < files[j].Name()
+		return extractPageNumber(files[i].Name()) < extractPageNumber(files[j].Name())
 	})
 
 	// Worker pool for concurrent OCR
 	ocrResults := make([]string, len(files))
+
+	// Acquiring gosseract pool
+	gossPool := utils.NewGosseractPool(9)
+	defer gossPool.Close()
 	var wg sync.WaitGroup
 	workerPool := make(chan struct{}, 9) // Limit to 9 concurrent workers
 	log.Println("Starting worker pool ...")
@@ -92,17 +115,26 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 		go func(index int, fileName string) {
 			defer wg.Done()
 			defer func() { <-workerPool }() // Release the worker slot
-
-			client := gosseract.NewClient()
-			defer client.Close()
+			client := gossPool.Get()
+			defer gossPool.Put(client)
+			defer func(client *gosseract.Client) {
+				err := client.Close()
+				if err != nil {
+					log.Printf("failed to close client: %v", err)
+				}
+			}(client)
 
 			imagePath := filepath.Join(outputDir, fileName)
-			client.SetImage(imagePath)
+			err := client.SetImage(imagePath)
+			if err != nil {
+				log.Printf("failed to set image %v: %v", fileName, err)
+				return
+			}
 
 			text, err := client.Text()
 			if err != nil {
 				log.Printf("OCR failed for %s: %v", imagePath, err)
-				text = fmt.Sprintf("Error: %v", err)
+				text = ""
 			}
 
 			ocrResults[index] = text
@@ -110,6 +142,6 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 	}
 	log.Println("Waiting worker pool to finish.")
 	wg.Wait() // Wait for all workers to complete
-	log.Println("Finished worker pool.")
+	log.Println("Worker pool finished.")
 	return &pb.StringListResponse{Lines: ocrResults}, nil
 }

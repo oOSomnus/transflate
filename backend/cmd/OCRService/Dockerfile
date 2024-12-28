@@ -69,6 +69,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     libleptonica-dev \
     libgomp1 \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # merge previous stages
