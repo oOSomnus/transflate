@@ -4,7 +4,6 @@ import (
 	"fmt"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
 	"github.com/oOSomnus/transflate/pkg/utils"
-	"github.com/otiai10/gosseract/v2"
 	"golang.org/x/net/context"
 	"log"
 	"os"
@@ -117,12 +116,6 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 			defer func() { <-workerPool }() // Release the worker slot
 			client := gossPool.Get()
 			defer gossPool.Put(client)
-			defer func(client *gosseract.Client) {
-				err := client.Close()
-				if err != nil {
-					log.Printf("failed to close client: %v", err)
-				}
-			}(client)
 
 			imagePath := filepath.Join(outputDir, fileName)
 			err := client.SetImage(imagePath)

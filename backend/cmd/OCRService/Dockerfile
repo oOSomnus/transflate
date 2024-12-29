@@ -31,6 +31,7 @@ WORKDIR /build
 RUN apt-get update && apt-get install -y \
     automake \
     autoconf \
+    autoconf-archive \
     libtool \
     g++ \
     pkg-config \
@@ -51,6 +52,8 @@ COPY engine/tesseract /build/tesseract
 WORKDIR /build/tesseract
 
 RUN apt-get update && apt-get install -y make
+
+RUN mkdir -p /build/tesseract/m4
 
 # autogen install
 RUN chmod +x ./autogen.sh \
