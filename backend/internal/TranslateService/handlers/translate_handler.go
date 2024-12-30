@@ -22,7 +22,7 @@ Returns:
   - (string): The translated text in Chinese if the request is successful.
   - (error): An error if there are issues with environment configuration, HTTP request creation, API response, or JSON unmarshalling.
 */
-func TranslateChunk(chunk string) (string, error) {
+func TranslateChunk(prevContext string, chunk string) (string, error) {
 	apiURL := "https://api.openai.com/v1/chat/completions"
 	//maxTokens := 1000
 	err := godotenv.Load()
@@ -33,7 +33,12 @@ func TranslateChunk(chunk string) (string, error) {
 	requestBody := domain.OpenAIRequest{
 		Model: "gpt-4",
 		Messages: []domain.OpenAIMessage{
-			{Role: "system", Content: "Translate the following text into Chinese:"},
+			{Role: "system", Content: "You are an expert in text translation.\n"},
+			{Role: "system", Content: "I'll provide you with some text, and please translate it into Chinese.\n"},
+			{Role: "system", Content: "In order to provide you with some context, below are some words from the previous text.\n"},
+			{Role: "system", Content: prevContext},
+			{Role: "system", Content: "Below are the text you need to translate, please try your best to translate it.\n"},
+			{Role: "system", Content: "Please only provide the translated context. Please don't include any of your own words.\n"},
 			{Role: "user", Content: chunk},
 		},
 	}

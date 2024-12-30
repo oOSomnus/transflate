@@ -58,6 +58,7 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 	// Create temp folder
 	log.Println("Received PDF Process request")
 	log.Println("Creating temp file ...")
+	lang := req.Language
 	tmpFile, err := os.CreateTemp("", "input-*.pdf")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %v", err)
@@ -102,7 +103,7 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 	ocrResults := make([]string, len(files))
 
 	// Acquiring gosseract pool
-	gossPool := utils.NewGosseractPool(9)
+	gossPool := utils.NewGosseractPool(9, lang)
 	defer gossPool.Close()
 	var wg sync.WaitGroup
 	workerPool := make(chan struct{}, 9) // Limit to 9 concurrent workers

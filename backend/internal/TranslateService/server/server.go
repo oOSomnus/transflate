@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
-	"fmt"
 	pb "github.com/oOSomnus/transflate/api/generated/translate"
 	"github.com/oOSomnus/transflate/internal/TranslateService/handlers"
 	"github.com/oOSomnus/transflate/pkg/utils"
+	"log"
 	"strings"
 	"sync"
 )
@@ -27,9 +27,9 @@ Returns:
 */
 func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb.TranslateRequest) (*pb.TranslateResult, error) {
 	longString := req.Text
-	maxTokens := 1000
+	maxWords := 1000
 	// partition string
-	chunks := utils.SplitString(longString, maxTokens)
+	chunks := utils.SplitString(longString, maxWords)
 
 	// translate in parallel
 	var wg sync.WaitGroup
@@ -40,7 +40,11 @@ func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb
 		wg.Add(1)
 		go func(i int, chunk string) {
 			defer wg.Done()
-			result, err := handlers.TranslateChunk(chunk)
+			prevContext := ""
+			if i != 0 {
+				prevContext = utils.GetLastNWords(chunks[i-1], 50)
+			}
+			result, err := handlers.TranslateChunk(prevContext, chunk)
 			results[i] = result
 			errors[i] = err
 		}(i, chunk)
@@ -51,7 +55,7 @@ func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb
 	// error checking
 	for i, err := range errors {
 		if err != nil {
-			fmt.Printf("Error translating chunk %d: %v\n", i, err)
+			log.Printf("Error translating chunk %d: %v\n", i, err)
 		}
 	}
 

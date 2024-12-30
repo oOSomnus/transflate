@@ -6,6 +6,7 @@ import (
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
 	pbt "github.com/oOSomnus/transflate/api/generated/translate"
 	"github.com/oOSomnus/transflate/internal/TaskManager/usecase"
+	"github.com/oOSomnus/transflate/pkg/utils"
 	"github.com/pkoukk/tiktoken-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -74,7 +75,7 @@ func TaskSubmit(c *gin.Context) {
 		})
 		return
 	}
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	ocrConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
@@ -86,13 +87,15 @@ func TaskSubmit(c *gin.Context) {
 		if err != nil {
 			log.Printf("Failed to close grpc connection: %v", err)
 		}
-	}(conn)
+	}(ocrConn)
 
-	ocrClient := pb.NewOCRServiceClient(conn)
+	lang := c.DefaultPostForm("lang", "eng")
+
+	ocrClient := pb.NewOCRServiceClient(ocrConn)
 	ocrCtx, ocrCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer ocrCancel()
 	log.Println("Start processing file ...")
-	ocrResponse, err := ocrClient.ProcessPDF(ocrCtx, &pb.PDFRequest{PdfData: fileContent})
+	ocrResponse, err := ocrClient.ProcessPDF(ocrCtx, &pb.PDFRequest{PdfData: fileContent, Language: lang})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
@@ -116,7 +119,8 @@ func TaskSubmit(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": mergedString,
 	})
-	return
+	mergedString = utils.RemoveNonUnicodeCharacters(mergedString)
+	mergedString = utils.ReplaceMultipleSpaces(mergedString)
 	//tokenize
 	encoder, err := tiktoken.GetEncoding("cl100k_base")
 	if err != nil {
@@ -135,14 +139,20 @@ func TaskSubmit(c *gin.Context) {
 		return
 	}
 	//translate
-	conn, err = grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	transConn, err := grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Internal server error",
 		})
 		return
 	}
-	translateClient := pbt.NewTranslateServiceClient(conn)
+	defer func() {
+		err := transConn.Close()
+		if err != nil {
+			log.Printf("Failed to close grpc connection: %v", err)
+		}
+	}()
+	translateClient := pbt.NewTranslateServiceClient(transConn)
 	transCtx, transCancel := context.WithTimeout(context.Background(), 3600*time.Second)
 	defer transCancel()
 	transResponse, err := translateClient.ProcessTranslation(transCtx, &pbt.TranslateRequest{Text: mergedString})
