@@ -19,7 +19,7 @@ Returns:
 func SplitString(s string, maxWords int) []string {
 	words := strings.Fields(s)
 	var chunks []string
-	for i := 0; i < len(words); i++ {
+	for i := 0; i < len(words); i += maxWords {
 		end := i + maxWords
 		if end > len(words) {
 			end = len(words)

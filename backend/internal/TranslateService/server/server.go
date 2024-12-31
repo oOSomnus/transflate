@@ -25,7 +25,9 @@ Returns:
   - (*pb.TranslateResult): The result containing the fully translated string after processing.
   - (error): An error if the translation process fails or encounters issues.
 */
-func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb.TranslateRequest) (*pb.TranslateResult, error) {
+func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb.TranslateRequest) (
+	*pb.TranslateResult, error,
+) {
 	longString := req.Text
 	maxWords := 1000
 	// partition string
@@ -35,11 +37,13 @@ func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb
 	var wg sync.WaitGroup
 	results := make([]string, len(chunks))
 	errors := make([]error, len(chunks))
-
+	workersPool := make(chan struct{}, 8)
 	for i, chunk := range chunks {
 		wg.Add(1)
+		workersPool <- struct{}{}
 		go func(i int, chunk string) {
 			defer wg.Done()
+			defer func() { <-workersPool }()
 			prevContext := ""
 			if i != 0 {
 				prevContext = utils.GetLastNWords(chunks[i-1], 50)

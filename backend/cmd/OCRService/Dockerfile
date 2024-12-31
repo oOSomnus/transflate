@@ -81,6 +81,8 @@ COPY --from=tesseract_builder /usr/local /usr/local
 COPY --from=builder /app/OCRService /app/OCRService
 COPY .env /app/.env
 
+COPY engine/ocr_trained_data/* /usr/local/share/tessdata
+
 RUN ldconfig
 
 # port

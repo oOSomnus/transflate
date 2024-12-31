@@ -49,12 +49,14 @@ func TranslateChunk(
 					openai.SystemMessage(prevContext),
 					openai.SystemMessage(
 						"Below are the text you need to translate, please try your best to translate it." +
-							" Please only provide the translated context. Please don't include any of your own words.",
+							//" Please only provide the translated context. Please don't include any of your own words." +
+							"Notice that there are some random characters or symbols, it is due to the inaccuracy of ocr. Please provide translate based on your understanding of the text and sounds like native speaker.",
 					),
 					openai.UserMessage(chunk),
 				},
 			),
-			Model: openai.F(openai.ChatModelGPT4),
+			Model:               openai.F(openai.ChatModelGPT3_5Turbo),
+			MaxCompletionTokens: openai.Int(1000),
 		},
 	)
 	if err != nil {
