@@ -5,8 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
 	pbt "github.com/oOSomnus/transflate/api/generated/translate"
-	"github.com/oOSomnus/transflate/internal/TaskManager/usecase"
-	"github.com/pkoukk/tiktoken-go"
+	"github.com/oOSomnus/transflate/pkg/utils"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -43,22 +42,28 @@ func TaskSubmit(c *gin.Context) {
 	usernameStr, ok := username.(string)
 	log.Println("Validating information ...")
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Invalid username type",
-		})
+		c.JSON(
+			http.StatusInternalServerError, gin.H{
+				"error": "Invalid username type",
+			},
+		)
 		return
 	}
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "User not authorized to submit task",
-		})
+		c.JSON(
+			http.StatusUnauthorized, gin.H{
+				"error": "User not authorized to submit task",
+			},
+		)
 		return
 	}
 	file, err := c.FormFile("document")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "document invalid",
-		})
+		c.JSON(
+			http.StatusBadRequest, gin.H{
+				"error": "document invalid",
+			},
+		)
 		return
 	}
 	//check whether it's pdf
@@ -69,16 +74,20 @@ func TaskSubmit(c *gin.Context) {
 	// Open the uploaded file
 	fileContent, err := openFile(file)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to read the uploaded file",
-		})
+		c.JSON(
+			http.StatusInternalServerError, gin.H{
+				"error": "Failed to read the uploaded file",
+			},
+		)
 		return
 	}
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	ocrConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
+		c.JSON(
+			http.StatusInternalServerError, gin.H{
+				"error": "Internal server error",
+			},
+		)
 		return
 	}
 	defer func(conn *grpc.ClientConn) {
@@ -86,23 +95,29 @@ func TaskSubmit(c *gin.Context) {
 		if err != nil {
 			log.Printf("Failed to close grpc connection: %v", err)
 		}
-	}(conn)
+	}(ocrConn)
 
-	ocrClient := pb.NewOCRServiceClient(conn)
+	lang := c.DefaultPostForm("lang", "eng")
+
+	ocrClient := pb.NewOCRServiceClient(ocrConn)
 	ocrCtx, ocrCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer ocrCancel()
 	log.Println("Start processing file ...")
-	ocrResponse, err := ocrClient.ProcessPDF(ocrCtx, &pb.PDFRequest{PdfData: fileContent})
+	ocrResponse, err := ocrClient.ProcessPDF(ocrCtx, &pb.PDFRequest{PdfData: fileContent, Language: lang})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
+		c.JSON(
+			http.StatusInternalServerError, gin.H{
+				"error": "Internal server error",
+			},
+		)
 		return
 	}
 	if ocrResponse == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
+		c.JSON(
+			http.StatusInternalServerError, gin.H{
+				"error": "Internal server error",
+			},
+		)
 		return
 	}
 	respLines := ocrResponse.Lines
@@ -113,48 +128,63 @@ func TaskSubmit(c *gin.Context) {
 		builder.WriteString(line)
 	}
 	mergedString := builder.String()
-	c.JSON(http.StatusOK, gin.H{
-		"data": mergedString,
-	})
-	return
+	mergedString = utils.RemoveNonUnicodeCharacters(mergedString)
+	mergedString = utils.ReplaceMultipleSpaces(mergedString)
 	//tokenize
-	encoder, err := tiktoken.GetEncoding("cl100k_base")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
-		return
-	}
-	tokens := encoder.Encode(mergedString, nil, nil)
-	numTokens := len(tokens)
-	err = usecase.DecreaseBalance(usernameStr, numTokens)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
-		return
-	}
+	//encoder, err := tiktoken.GetEncoding("cl100k_base")
+	//if err != nil {
+	//	c.JSON(
+	//		http.StatusInternalServerError, gin.H{
+	//			"error": "Internal server error",
+	//		},
+	//	)
+	//	return
+	//}
+	//tokens := encoder.Encode(mergedString, nil, nil)
+	//numTokens := len(tokens)
+	//err = usecase.DecreaseBalance(usernameStr, numTokens)
+	//if err != nil {
+	//	c.JSON(
+	//		http.StatusInternalServerError, gin.H{
+	//			"error": "Internal server error",
+	//		},
+	//	)
+	//	return
+	//}
+	log.Printf("Username: %s", usernameStr)
 	//translate
-	conn, err = grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	transConn, err := grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
+		c.JSON(
+			http.StatusInternalServerError, gin.H{
+				"error": "Internal server error",
+			},
+		)
 		return
 	}
-	translateClient := pbt.NewTranslateServiceClient(conn)
+	defer func() {
+		err := transConn.Close()
+		if err != nil {
+			log.Printf("Failed to close grpc connection: %v", err)
+		}
+	}()
+	translateClient := pbt.NewTranslateServiceClient(transConn)
 	transCtx, transCancel := context.WithTimeout(context.Background(), 3600*time.Second)
 	defer transCancel()
 	transResponse, err := translateClient.ProcessTranslation(transCtx, &pbt.TranslateRequest{Text: mergedString})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
+		c.JSON(
+			http.StatusInternalServerError, gin.H{
+				"error": "Internal server error",
+			},
+		)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data": transResponse.Lines,
-	})
+	c.JSON(
+		http.StatusOK, gin.H{
+			"data": transResponse.Lines,
+		},
+	)
 	return
 }
 

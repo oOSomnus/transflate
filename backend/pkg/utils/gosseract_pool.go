@@ -1,15 +1,23 @@
 package utils
 
-import "github.com/otiai10/gosseract/v2"
+import (
+	"github.com/otiai10/gosseract/v2"
+	"log"
+)
 
 type GosseractPool struct {
 	pool chan *gosseract.Client
 }
 
-func NewGosseractPool(size int) *GosseractPool {
+func NewGosseractPool(size int, lang string) *GosseractPool {
 	pool := make(chan *gosseract.Client, size)
 	for i := 0; i < size; i++ {
-		pool <- gosseract.NewClient()
+		tempClient := gosseract.NewClient()
+		err := tempClient.SetLanguage(lang)
+		if err != nil {
+			log.Fatalf("Failed to set language to %s", lang)
+		}
+		pool <- tempClient
 	}
 	return &GosseractPool{pool: pool}
 }

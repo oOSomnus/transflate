@@ -10,6 +10,7 @@ service OCRService  {
 
 message PDFRequest {
   bytes pdf_data = 1;
+  string language = 2;
 }
 
 message StringListResponse {

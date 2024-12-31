@@ -26,14 +26,15 @@ func main() {
 	auth.POST("/submit", handlers.TaskSubmit)
 	port := ":8080"
 	log.Printf("Starting server on %s", port)
-	err := r.Run(port)
-	if err != nil {
-		log.Fatal(err)
-	}
 	defer func(DB *sql.DB) {
 		err := DB.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}(config.DB)
+	err := r.Run(port)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
