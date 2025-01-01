@@ -15,19 +15,19 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # copy code & compile
-COPY cmd/OCRService ./cmd/OCRService
+COPY cmd/ocr_service ./cmd/ocr_service
 COPY internal ./internal
 COPY pkg ./pkg
 COPY api ./api
 
-RUN GOOS=linux go build -o /app/OCRService ./cmd/OCRService
+RUN GOOS=linux go build -o /app/ocr_service ./cmd/ocr_service
 
 # Tesseract build
 FROM ubuntu:22.04 AS tesseract_builder
 
 WORKDIR /build
 
-# install Tesseract dependencies
+# install dependencies
 RUN apt-get update && apt-get install -y \
     automake \
     autoconf \
@@ -44,6 +44,7 @@ RUN apt-get update && apt-get install -y \
     libcairo2-dev \
     libleptonica-dev \
     git \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
 # copy origin code
@@ -51,7 +52,6 @@ COPY engine/tesseract /build/tesseract
 
 WORKDIR /build/tesseract
 
-RUN apt-get update && apt-get install -y make
 
 RUN mkdir -p /build/tesseract/m4
 
@@ -77,8 +77,7 @@ RUN apt-get update && apt-get install -y \
 
 # merge previous stages
 COPY --from=tesseract_builder /usr/local /usr/local
-
-COPY --from=builder /app/OCRService /app/OCRService
+COPY --from=builder /app/ocr_service /app/ocr_service
 COPY .env /app/.env
 
 COPY engine/ocr_trained_data/* /usr/local/share/tessdata
@@ -92,4 +91,4 @@ EXPOSE 50051
 SHELL ["/bin/bash", "-c"]
 
 # start the service
-CMD ["/app/OCRService"]
+CMD ["/app/ocr_service"]

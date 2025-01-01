@@ -90,14 +90,17 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 	log.Println("Images converted successfully.")
 	// Read generated image files
 	files, err := os.ReadDir(outputDir)
+	pageNumber := len(files)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read converted images: %v", err)
 	}
 
 	// Sort files by name (to ensure page order)
-	sort.Slice(files, func(i, j int) bool {
-		return extractPageNumber(files[i].Name()) < extractPageNumber(files[j].Name())
-	})
+	sort.Slice(
+		files, func(i, j int) bool {
+			return extractPageNumber(files[i].Name()) < extractPageNumber(files[j].Name())
+		},
+	)
 
 	// Worker pool for concurrent OCR
 	ocrResults := make([]string, len(files))
@@ -137,5 +140,5 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 	log.Println("Waiting worker pool to finish.")
 	wg.Wait() // Wait for all workers to complete
 	log.Println("Worker pool finished.")
-	return &pb.StringListResponse{Lines: ocrResults}, nil
+	return &pb.StringListResponse{Lines: ocrResults, PageNum: uint32(pageNumber)}, nil
 }

@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	pb "github.com/oOSomnus/transflate/api/generated/translate"
-	"github.com/oOSomnus/transflate/internal/TranslateService/handlers"
+	"github.com/oOSomnus/transflate/internal/translate_service/handlers"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"log"
 	"strings"
@@ -29,7 +29,7 @@ func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb
 	*pb.TranslateResult, error,
 ) {
 	longString := req.Text
-	maxWords := 1000
+	maxWords := 2000
 	// partition string
 	chunks := utils.SplitString(longString, maxWords)
 
@@ -64,6 +64,6 @@ func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb
 	}
 
 	// combine results
-	finalTranslation := strings.Join(results, " ")
+	finalTranslation := strings.Join(results, "\n")
 	return &pb.TranslateResult{Lines: finalTranslation}, nil
 }

@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
-	"github.com/oOSomnus/transflate/internal/TaskManager/handlers"
+	"github.com/oOSomnus/transflate/internal/task_manager/handlers"
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/oOSomnus/transflate/cmd/TaskManager/config"
+	"github.com/oOSomnus/transflate/cmd/task_manager/config"
 	"github.com/oOSomnus/transflate/pkg/middleware"
 )
 
