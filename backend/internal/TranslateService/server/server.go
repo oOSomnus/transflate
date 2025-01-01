@@ -64,6 +64,6 @@ func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb
 	}
 
 	// combine results
-	finalTranslation := strings.Join(results, " ")
+	finalTranslation := strings.Join(results, "\n")
 	return &pb.TranslateResult{Lines: finalTranslation}, nil
 }

@@ -15,4 +15,5 @@ message PDFRequest {
 
 message StringListResponse {
   repeated string lines = 1;
+  uint32 page_num = 2;
 }

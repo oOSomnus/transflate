@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
 	pbt "github.com/oOSomnus/transflate/api/generated/translate"
+	"github.com/oOSomnus/transflate/internal/TaskManager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -130,27 +131,17 @@ func TaskSubmit(c *gin.Context) {
 	mergedString := builder.String()
 	mergedString = utils.RemoveNonUnicodeCharacters(mergedString)
 	mergedString = utils.ReplaceMultipleSpaces(mergedString)
-	//tokenize
-	//encoder, err := tiktoken.GetEncoding("cl100k_base")
-	//if err != nil {
-	//	c.JSON(
-	//		http.StatusInternalServerError, gin.H{
-	//			"error": "Internal server error",
-	//		},
-	//	)
-	//	return
-	//}
-	//tokens := encoder.Encode(mergedString, nil, nil)
-	//numTokens := len(tokens)
-	//err = usecase.DecreaseBalance(usernameStr, numTokens)
-	//if err != nil {
-	//	c.JSON(
-	//		http.StatusInternalServerError, gin.H{
-	//			"error": "Internal server error",
-	//		},
-	//	)
-	//	return
-	//}
+	//decrease balance
+	numPages := int(ocrResponse.PageNum)
+	err = usecase.DecreaseBalance(usernameStr, numPages)
+	if err != nil {
+		c.JSON(
+			http.StatusInternalServerError, gin.H{
+				"error": "Internal server error",
+			},
+		)
+		return
+	}
 	log.Printf("Username: %s", usernameStr)
 	//translate
 	transConn, err := grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -180,9 +171,14 @@ func TaskSubmit(c *gin.Context) {
 		)
 		return
 	}
+	downLink, err := utils.CreateDownloadLinkWithMdString(transResponse.Lines)
+	//covert md into html
+	if err != nil {
+		log.Fatalf("Failed to create download link: %v", err)
+	}
 	c.JSON(
 		http.StatusOK, gin.H{
-			"data": transResponse.Lines,
+			"data": downLink,
 		},
 	)
 	return
