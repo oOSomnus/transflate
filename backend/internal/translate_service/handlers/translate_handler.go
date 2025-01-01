@@ -42,22 +42,14 @@ func TranslateChunk(
 			Messages: openai.F(
 				[]openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(
-						"You are an expert in text translation" +
-							"I'll provide you with some text, and please translate it into Chinese." +
-							"In order to provide you with some context, below are some words from the previous text.",
+						"You are a professional translator. Translate the following English text into Chinese. Ignore random characters or symbols, and focus on the meaningful content. Provide the result in markdown format.",
 					),
-					openai.SystemMessage(prevContext),
-					openai.SystemMessage(
-						"Below are the text you need to translate, please try your best to translate it." +
-							"Please don't include any of your own thought." +
-							"Notice that there are some random characters or symbols, it is due to the inaccuracy of ocr. Please provide translate based on your understanding of the text and sounds like native speaker." +
-							"Please provide your translated text in markdown format.",
-					),
-					openai.UserMessage(chunk),
+					openai.UserMessage("Previous context for reference: " + prevContext),
+					openai.UserMessage("Text to translate: " + chunk),
 				},
 			),
-			Model:               openai.F(openai.ChatModelGPT3_5Turbo),
-			MaxCompletionTokens: openai.Int(1000),
+			Model:               openai.F(openai.ChatModelGPT4Turbo),
+			MaxCompletionTokens: openai.Int(3000),
 		},
 	)
 	if err != nil {

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/joho/godotenv"
 	"os"
 	"time"
 )
 
 const (
-	bucketName = "your-bucket-name"
+	bucketName = "transflate-bucket"
 )
 
 /*
@@ -27,6 +27,10 @@ Returns:
 */
 func UploadFileToS3(bucketName, objectKey, filePath string, expirationDays int) error {
 	// load default config
+	err := godotenv.Load()
+	if err != nil {
+		return fmt.Errorf("error loading .env file")
+	}
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		return fmt.Errorf("unable to load config %w", err)
@@ -46,11 +50,11 @@ func UploadFileToS3(bucketName, objectKey, filePath string, expirationDays int) 
 
 	// upload
 	_, err = client.PutObject(
-		context.TODO(), &s3.PutObjectInput{
+		context.Background(), &s3.PutObjectInput{
 			Bucket: &bucketName,
 			Key:    &objectKey,
 			Body:   file,
-			ACL:    types.ObjectCannedACLPublicRead, // optional, restriction
+			//ACL:    types.ObjectCannedACLPublicRead, // optional, restriction
 			Metadata: map[string]string{
 				"Expires": expiration,
 			},
@@ -77,7 +81,7 @@ Returns:
 */
 
 func DownloadFileFromS3(bucketName, objectKey, destination string) error {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		return fmt.Errorf("can't load s3 config: %w", err)
 	}
@@ -86,7 +90,7 @@ func DownloadFileFromS3(bucketName, objectKey, destination string) error {
 
 	// get obj
 	resp, err := client.GetObject(
-		context.TODO(), &s3.GetObjectInput{
+		context.Background(), &s3.GetObjectInput{
 			Bucket: &bucketName,
 			Key:    &objectKey,
 		},
@@ -126,7 +130,11 @@ Returns:
 */
 
 func GeneratePresignedURL(bucketName, objectKey string, expiration time.Duration) (string, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	err := godotenv.Load()
+	if err != nil {
+		return "", fmt.Errorf("error loading .env file")
+	}
+	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("unable to load s3 config: %w", err)
 	}
@@ -137,7 +145,7 @@ func GeneratePresignedURL(bucketName, objectKey string, expiration time.Duration
 
 	// generate pre-signed url
 	presignedURL, err := presignClient.PresignGetObject(
-		context.TODO(), &s3.GetObjectInput{
+		context.Background(), &s3.GetObjectInput{
 			Bucket: &bucketName,
 			Key:    &objectKey,
 		}, s3.WithPresignExpires(expiration),

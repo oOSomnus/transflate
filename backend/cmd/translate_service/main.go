@@ -2,7 +2,7 @@ package main
 
 import (
 	pb "github.com/oOSomnus/transflate/api/generated/translate"
-	"github.com/oOSomnus/transflate/internal/TranslateService/server"
+	"github.com/oOSomnus/transflate/internal/translate_service/server"
 	"google.golang.org/grpc"
 	"log"
 	"net"

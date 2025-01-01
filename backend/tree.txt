@@ -15,8 +15,6 @@
 │   ├── docker_build.sh
 │   └── proto_gen.sh
 ├── build
-│   ├── OCRService
-│   ├── TaskManager
 │   └── TranslateService
 ├── cmd
 │   ├── OCRService
@@ -30,6 +28,10 @@
 │   └── TranslateService
 │       └── main.go
 ├── engine
+│   ├── ocr_trained_data
+│   │   ├── chi_sim.traineddata
+│   │   ├── eng.traineddata
+│   │   └── osd.traineddata
 │   └── tesseract
 │       ├── AUTHORS
 │       ├── CITATIONS.bib
@@ -801,9 +803,11 @@
 │   ├── middleware
 │   │   └── auth.go
 │   └── utils
+│       ├── aws_s3_file_service.go
+│       ├── file_text_processor.go
 │       ├── gosseract_pool.go
-│       ├── split_string.go
+│       ├── md_to_download_link.go
 │       └── token_gen.go
 └── tree.txt
 
-70 directories, 736 files
+71 directories, 739 files

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/oOSomnus/transflate/cmd/TaskManager/config"
+	"github.com/oOSomnus/transflate/cmd/task_manager/config"
 )
 
 /*
@@ -121,7 +121,9 @@ func DecreaseBalance(username string, balance int) error {
 	if currentBalance < balance {
 		return errors.New("insufficient balance")
 	}
-	_, err = tx.ExecContext(context.Background(), "UPDATE users SET balance = balance - $1 WHERE username = $2", balance, username)
+	_, err = tx.ExecContext(
+		context.Background(), "UPDATE users SET balance = balance - $1 WHERE username = $2", balance, username,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to update balance: %w", err)
 	}

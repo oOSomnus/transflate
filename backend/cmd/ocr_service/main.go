@@ -2,7 +2,7 @@ package main
 
 import (
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
-	"github.com/oOSomnus/transflate/internal/OCRService/server"
+	"github.com/oOSomnus/transflate/internal/ocr_service/server"
 	"google.golang.org/grpc"
 	"log"
 	"net"

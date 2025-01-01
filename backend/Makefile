@@ -6,7 +6,7 @@ GO_FILES := $(shell find . -type f -name '*.go')
 OUTPUT_DIR := build
 
 # services
-SERVICES := OCRService TranslateService TaskManager
+SERVICES := ocr_service translate_service task_manager
 .DEFAULT_GOAL := help
 
 # default target

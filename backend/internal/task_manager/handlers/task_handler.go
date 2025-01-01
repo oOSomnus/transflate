@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
 	pbt "github.com/oOSomnus/transflate/api/generated/translate"
-	"github.com/oOSomnus/transflate/internal/TaskManager/usecase"
+	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -181,7 +181,6 @@ func TaskSubmit(c *gin.Context) {
 			"data": downLink,
 		},
 	)
-	return
 }
 
 /*

@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/oOSomnus/transflate/internal/TaskManager/domain"
-	"github.com/oOSomnus/transflate/internal/TaskManager/usecase"
+	"github.com/oOSomnus/transflate/internal/task_manager/domain"
+	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"net/http"
 )
@@ -38,11 +38,13 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message":  "Login successful",
-		"username": req.Username,
-		"token":    token,
-	})
+	c.JSON(
+		http.StatusOK, gin.H{
+			"message":  "Login successful",
+			"username": req.Username,
+			"token":    token,
+		},
+	)
 }
 
 /*
@@ -65,7 +67,9 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User created successfully",
-	})
+	c.JSON(
+		http.StatusOK, gin.H{
+			"message": "User created successfully",
+		},
+	)
 }
