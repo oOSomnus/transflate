@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/joho/godotenv"
 	"os"
 	"time"
 )
@@ -27,10 +26,7 @@ Returns:
 */
 func UploadFileToS3(bucketName, objectKey, filePath string, expirationDays int) error {
 	// load default config
-	err := godotenv.Load()
-	if err != nil {
-		return fmt.Errorf("error loading .env file")
-	}
+	LoadEnv()
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		return fmt.Errorf("unable to load config %w", err)
@@ -130,10 +126,7 @@ Returns:
 */
 
 func GeneratePresignedURL(bucketName, objectKey string, expiration time.Duration) (string, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return "", fmt.Errorf("error loading .env file")
-	}
+	LoadEnv()
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("unable to load s3 config: %w", err)

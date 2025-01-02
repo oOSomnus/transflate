@@ -2,11 +2,9 @@ package config
 
 import (
 	"database/sql"
-	"github.com/joho/godotenv"
-	"log"
-	"os"
-
 	_ "github.com/lib/pq" // PostgreSQL driver
+	"github.com/oOSomnus/transflate/pkg/utils"
+	"log"
 )
 
 var DB *sql.DB
@@ -21,12 +19,9 @@ Returns:
 
 func ConnectDB() {
 	// DB connection info
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	username := os.Getenv("PG_USERNAME")
-	password := os.Getenv("PG_PASSWORD")
+	utils.LoadEnv()
+	username := utils.GetEnv("PG_USERNAME")
+	password := utils.GetEnv("PG_PASSWORD")
 	host := "127.0.0.1"
 	port := "5432"
 	dbname := "postgres"

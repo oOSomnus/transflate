@@ -57,3 +57,9 @@ func ReplaceMultipleSpaces(input string) string {
 	re := regexp.MustCompile(`\s{2,}`)
 	return re.ReplaceAllString(input, " ")
 }
+
+func TextCleaning(str string) string {
+	str = RemoveNonUnicodeCharacters(str)
+	str = ReplaceMultipleSpaces(str)
+	return str
+}

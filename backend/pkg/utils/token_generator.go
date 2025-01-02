@@ -2,9 +2,6 @@ package utils
 
 import (
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
-	"log"
-	"os"
 	"time"
 )
 
@@ -19,11 +16,8 @@ Returns:
   - (error): An error if the token signing process fails.
 */
 func GenerateToken(username string) (string, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+	LoadEnv()
+	var jwtSecret = GetEnv("JWT_SECRET")
 	// Token created
 	claims := jwt.MapClaims{
 		"username": username,

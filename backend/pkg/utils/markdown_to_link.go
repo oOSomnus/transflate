@@ -23,10 +23,6 @@ func CreateDownloadLinkWithMdString(mdString string) (string, error) {
 	if err != nil {
 		log.Fatalln(errors.Wrap(err, "Error creating temp file"))
 	}
-	//var htmlBuf bytes.Buffer
-	//if err := goldmark.Convert([]byte(mdString), &htmlBuf); err != nil {
-	//	log.Fatalln("Failed to parse response:", err)
-	//}
 	defer func(name string) {
 		err := os.Remove(name)
 		if err != nil {
@@ -37,25 +33,6 @@ func CreateDownloadLinkWithMdString(mdString string) (string, error) {
 	if err != nil {
 		log.Fatalln(errors.Wrap(err, "Error writing to temp file"))
 	}
-	//pdfTmpFile, err := os.CreateTemp("", "respPdf-*.pdf")
-	//if err != nil {
-	//	log.Fatalln(errors.Wrap(err, "Error creating temp file"))
-	//}
-	//defer func(name string) {
-	//	err := os.Remove(name)
-	//	if err != nil {
-	//		log.Fatalln(errors.Wrapf(err, "Failed to remove file: %s", name))
-	//	}
-	//}(pdfTmpFile.Name())
-	//convert into pdf
-	//cmd := exec.Command(
-	//	"pandoc",
-	//	mdTmpFIle.Name(),
-	//	"-o", pdfTmpFile.Name(),
-	//	"--pdf-engine=xelatex",
-	//	"-V", "mainfont=Noto Sans CJK SC", // 替换为你本地安装的中文字体
-	//)
-	//err = cmd.Run()
 	err = UploadFileToS3(bucketName, "mds/"+filepath.Base(mdTmpFile.Name()), mdTmpFile.Name(), 1)
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to upload file")

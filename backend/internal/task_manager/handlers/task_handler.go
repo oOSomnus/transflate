@@ -1,22 +1,12 @@
 package handlers
 
 import (
-	"bytes"
 	"github.com/gin-gonic/gin"
-	pb "github.com/oOSomnus/transflate/api/generated/ocr"
-	pbt "github.com/oOSomnus/transflate/api/generated/translate"
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"io"
 	"log"
-	"mime/multipart"
 	"net/http"
 	"path/filepath"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -73,105 +63,12 @@ func TaskSubmit(c *gin.Context) {
 		return
 	}
 	// Open the uploaded file
-	fileContent, err := openFile(file)
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Failed to read the uploaded file",
-			},
-		)
-		return
-	}
-	ocrConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Printf("Failed to close grpc connection: %v", err)
-		}
-	}(ocrConn)
-
+	fileContent, err := utils.OpenFile(file)
 	lang := c.DefaultPostForm("lang", "eng")
 
-	ocrClient := pb.NewOCRServiceClient(ocrConn)
-	ocrCtx, ocrCancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer ocrCancel()
-	log.Println("Start processing file ...")
-	ocrResponse, err := ocrClient.ProcessPDF(ocrCtx, &pb.PDFRequest{PdfData: fileContent, Language: lang})
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	if ocrResponse == nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	respLines := ocrResponse.Lines
-	log.Println("File processed successfully.")
-	//merge strings
-	var builder strings.Builder
-	for _, line := range respLines {
-		builder.WriteString(line)
-	}
-	mergedString := builder.String()
-	mergedString = utils.RemoveNonUnicodeCharacters(mergedString)
-	mergedString = utils.ReplaceMultipleSpaces(mergedString)
-	//decrease balance
-	numPages := int(ocrResponse.PageNum)
-	err = usecase.DecreaseBalance(usernameStr, numPages)
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	log.Printf("Username: %s", usernameStr)
-	//translate
-	transConn, err := grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	defer func() {
-		err := transConn.Close()
-		if err != nil {
-			log.Printf("Failed to close grpc connection: %v", err)
-		}
-	}()
-	translateClient := pbt.NewTranslateServiceClient(transConn)
-	transCtx, transCancel := context.WithTimeout(context.Background(), 3600*time.Second)
-	defer transCancel()
-	transResponse, err := translateClient.ProcessTranslation(transCtx, &pbt.TranslateRequest{Text: mergedString})
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	downLink, err := utils.CreateDownloadLinkWithMdString(transResponse.Lines)
+	transResponse, err := usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
+
+	downLink, err := utils.CreateDownloadLinkWithMdString(transResponse)
 	//covert md into html
 	if err != nil {
 		log.Fatalf("Failed to create download link: %v", err)
@@ -181,33 +78,4 @@ func TaskSubmit(c *gin.Context) {
 			"data": downLink,
 		},
 	)
-}
-
-/*
-openFile reads the contents of a given multipart file header into a byte slice.
-
-Parameters:
-  - file (*multipart.FileHeader): The multipart file header to open and read.
-
-Returns:
-  - ([]byte): A byte slice containing the file's contents.
-  - (error): An error if the file cannot be opened, read, or closed properly.
-*/
-func openFile(file *multipart.FileHeader) ([]byte, error) {
-	src, err := file.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer func(src multipart.File) {
-		err := src.Close()
-		if err != nil {
-			log.Printf("Failed to close src: %v", err)
-		}
-	}(src)
-
-	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, src); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
 }
