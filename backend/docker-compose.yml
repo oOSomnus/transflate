@@ -43,7 +43,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - app-network
+      - transflate-network
 
 volumes:
   postgres_data:
