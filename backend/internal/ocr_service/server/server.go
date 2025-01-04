@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
-	"github.com/oOSomnus/transflate/pkg/utils"
+	"github.com/oOSomnus/transflate/internal/ocr_service/pool"
 	"golang.org/x/net/context"
 	"log"
 	"os"
@@ -106,7 +106,7 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 	ocrResults := make([]string, len(files))
 
 	// Acquiring gosseract pool
-	gossPool := utils.NewGosseractPool(9, lang)
+	gossPool := pool.NewGosseractPool(9, lang)
 	defer gossPool.Close()
 	var wg sync.WaitGroup
 	workerPool := make(chan struct{}, 9) // Limit to 9 concurrent workers

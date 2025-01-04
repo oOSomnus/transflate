@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/oOSomnus/transflate/cmd/task_manager/config"
+	"log"
+	"time"
 )
 
 /*
@@ -24,8 +26,8 @@ func FindUsrWithUsername(username string) (string, error) {
 	var pwd string
 	err := row.Scan(&pwd)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", errors.New("invalid username or password")
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errors.New("user not found")
 		}
 		return "", err
 	}
@@ -48,7 +50,7 @@ func IfUserExists(username string) (bool, error) {
 	var userId int
 	err := row.Scan(&userId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
 		}
 		return false, err
@@ -94,38 +96,44 @@ func DecreaseBalance(username string, balance int) error {
 	if balance <= 0 {
 		return errors.New("invalid amount")
 	}
-	tx, err := config.DB.BeginTx(context.Background(), nil)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	tx, err := config.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
+
 	defer func() {
-		// rollback
 		if p := recover(); p != nil {
 			_ = tx.Rollback()
-			panic(p)
+			log.Println("recovered from panic:", p)
 		} else if err != nil {
 			_ = tx.Rollback()
 		} else {
 			_ = tx.Commit()
 		}
 	}()
+
 	var currentBalance int
 	query := "SELECT balance FROM users WHERE username = $1 FOR UPDATE"
-	err = tx.QueryRowContext(context.Background(), query, username).Scan(&currentBalance)
+	err = tx.QueryRowContext(ctx, query, username).Scan(&currentBalance)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("user not found")
 		}
 		return fmt.Errorf("failed to get current balance: %w", err)
 	}
+
 	if currentBalance < balance {
 		return errors.New("insufficient balance")
 	}
-	_, err = tx.ExecContext(
-		context.Background(), "UPDATE users SET balance = balance - $1 WHERE username = $2", balance, username,
-	)
+
+	_, err = tx.ExecContext(ctx, "UPDATE users SET balance = balance - $1 WHERE username = $2", balance, username)
 	if err != nil {
 		return fmt.Errorf("failed to update balance: %w", err)
 	}
+
 	return nil
 }

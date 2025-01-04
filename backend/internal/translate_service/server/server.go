@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	pb "github.com/oOSomnus/transflate/api/generated/translate"
+	"github.com/oOSomnus/transflate/internal/translate_service/domain"
 	"github.com/oOSomnus/transflate/internal/translate_service/handlers"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"log"
@@ -48,7 +49,7 @@ func (s *TranslateServiceServer) ProcessTranslation(ctx context.Context, req *pb
 			if i != 0 {
 				prevContext = utils.GetLastNWords(chunks[i-1], 50)
 			}
-			result, err := handlers.TranslateChunk(prevContext, chunk)
+			result, err := handlers.TranslateChunk(prevContext, chunk, domain.NewGPTTranslator())
 			results[i] = result
 			errors[i] = err
 		}(i, chunk)

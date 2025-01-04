@@ -11,7 +11,6 @@ RUN go mod download
 COPY cmd/task_manager ./cmd/task_manager
 COPY internal/task_manager ./internal/task_manager
 COPY pkg ./pkg
-RUN rm /app/pkg/utils/gosseract_pool.go
 COPY api ./api
 
 # compile binary

@@ -3,12 +3,18 @@ package main
 import (
 	"database/sql"
 	"github.com/oOSomnus/transflate/internal/task_manager/handlers"
+	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/cmd/task_manager/config"
 	"github.com/oOSomnus/transflate/pkg/middleware"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	log.SetPrefix("[Task Manager Service] ")
+}
 
 func main() {
 	gin.SetMode(gin.DebugMode)
@@ -32,6 +38,21 @@ func main() {
 			log.Fatal(err)
 		}
 	}(config.DB)
+
+	defer func() {
+		err := service.CloseOcrGRPCConn()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
+	defer func() {
+		err := service.CloseTransGrpcConn()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
 	err := r.Run(port)
 	if err != nil {
 		log.Fatal(err)

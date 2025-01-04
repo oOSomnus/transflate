@@ -8,6 +8,11 @@ import (
 	"net"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	log.SetPrefix("[OCR Service] ")
+}
+
 func main() {
 	// Start gRPC service
 	listener, err := net.Listen("tcp", ":50051")

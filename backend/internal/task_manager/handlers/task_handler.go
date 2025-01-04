@@ -1,21 +1,15 @@
 package handlers
 
 import (
-	"bytes"
 	"github.com/gin-gonic/gin"
-	pb "github.com/oOSomnus/transflate/api/generated/ocr"
-	pbt "github.com/oOSomnus/transflate/api/generated/translate"
+	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"io"
+	"github.com/pkg/errors"
 	"log"
-	"mime/multipart"
 	"net/http"
+	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -73,105 +67,15 @@ func TaskSubmit(c *gin.Context) {
 		return
 	}
 	// Open the uploaded file
-	fileContent, err := openFile(file)
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Failed to read the uploaded file",
-			},
-		)
-		return
-	}
-	ocrConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Printf("Failed to close grpc connection: %v", err)
-		}
-	}(ocrConn)
-
+	fileContent, err := utils.OpenFile(file)
 	lang := c.DefaultPostForm("lang", "eng")
 
-	ocrClient := pb.NewOCRServiceClient(ocrConn)
-	ocrCtx, ocrCancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer ocrCancel()
-	log.Println("Start processing file ...")
-	ocrResponse, err := ocrClient.ProcessPDF(ocrCtx, &pb.PDFRequest{PdfData: fileContent, Language: lang})
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	if ocrResponse == nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	respLines := ocrResponse.Lines
-	log.Println("File processed successfully.")
-	//merge strings
-	var builder strings.Builder
-	for _, line := range respLines {
-		builder.WriteString(line)
-	}
-	mergedString := builder.String()
-	mergedString = utils.RemoveNonUnicodeCharacters(mergedString)
-	mergedString = utils.ReplaceMultipleSpaces(mergedString)
-	//decrease balance
-	numPages := int(ocrResponse.PageNum)
-	err = usecase.DecreaseBalance(usernameStr, numPages)
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	log.Printf("Username: %s", usernameStr)
-	//translate
-	transConn, err := grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	defer func() {
-		err := transConn.Close()
-		if err != nil {
-			log.Printf("Failed to close grpc connection: %v", err)
-		}
-	}()
-	translateClient := pbt.NewTranslateServiceClient(transConn)
-	transCtx, transCancel := context.WithTimeout(context.Background(), 3600*time.Second)
-	defer transCancel()
-	transResponse, err := translateClient.ProcessTranslation(transCtx, &pbt.TranslateRequest{Text: mergedString})
-	if err != nil {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Internal server error",
-			},
-		)
-		return
-	}
-	downLink, err := utils.CreateDownloadLinkWithMdString(transResponse.Lines)
+	transResponse, err := usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
+
+	log.Printf("transresponse: %s", transResponse)
+	return
+	// -------------------------------- wont reach ----------------------//
+	downLink, err := CreateDownloadLinkWithMdString(transResponse)
 	//covert md into html
 	if err != nil {
 		log.Fatalf("Failed to create download link: %v", err)
@@ -184,30 +88,37 @@ func TaskSubmit(c *gin.Context) {
 }
 
 /*
-openFile reads the contents of a given multipart file header into a byte slice.
+CreateDownloadLinkWithMdString generates a downloadable link for a PDF file created from a Markdown string.
 
 Parameters:
-  - file (*multipart.FileHeader): The multipart file header to open and read.
+  - mdString (string): The input Markdown content to be converted into a PDF.
 
 Returns:
-  - ([]byte): A byte slice containing the file's contents.
-  - (error): An error if the file cannot be opened, read, or closed properly.
+  - (string): A presigned URL for downloading the generated PDF file.
+  - (error): An error if the process of creating the file, converting the Markdown, or generating the link fails.
 */
-func openFile(file *multipart.FileHeader) ([]byte, error) {
-	src, err := file.Open()
+func CreateDownloadLinkWithMdString(mdString string) (string, error) {
+	mdTmpFile, err := os.CreateTemp("", "respMd-*.md")
 	if err != nil {
-		return nil, err
+		log.Fatalln(errors.Wrap(err, "Error creating temp file"))
 	}
-	defer func(src multipart.File) {
-		err := src.Close()
+	defer func(name string) {
+		err := os.Remove(name)
 		if err != nil {
-			log.Printf("Failed to close src: %v", err)
+			log.Fatalln(errors.Wrapf(err, "Failed to remove file: %s", name))
 		}
-	}(src)
-
-	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, src); err != nil {
-		return nil, err
+	}(mdTmpFile.Name())
+	_, err = mdTmpFile.Write([]byte(mdString))
+	if err != nil {
+		log.Fatalln(errors.Wrap(err, "Error writing to temp file"))
 	}
-	return buf.Bytes(), nil
+	err = service.UploadFileToS3(service.BucketName, "mds/"+filepath.Base(mdTmpFile.Name()), mdTmpFile.Name(), 1)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to upload file")
+	}
+	downLink, err := service.GeneratePresignedURL(service.BucketName, "mds/"+filepath.Base(mdTmpFile.Name()), time.Hour)
+	if err != nil {
+		return "", errors.Wrap(err, "Failed to generate presigned url")
+	}
+	return downLink, nil
 }

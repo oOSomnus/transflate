@@ -8,6 +8,11 @@ import (
 	"net"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	log.SetPrefix("[Translate Service] ")
+}
+
 func main() {
 	listener, err := net.Listen("tcp", ":50052")
 	if err != nil {
