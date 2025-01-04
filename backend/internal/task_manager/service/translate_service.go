@@ -21,7 +21,7 @@ func getTransGrpcConn() (*grpc.ClientConn, error) {
 	transGrpcOnce.Do(
 		func() {
 			transGrpcConn, transGrpcErr = grpc.NewClient(
-				"localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()),
+				"localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()),
 			)
 			if transGrpcErr != nil {
 				log.Printf("TransGrpcErr: %v", transGrpcErr)

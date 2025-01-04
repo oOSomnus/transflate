@@ -17,7 +17,7 @@ Returns:
 */
 func GenerateToken(username string) (string, error) {
 	LoadEnv()
-	var jwtSecret = GetEnv("JWT_SECRET")
+	var jwtSecret = []byte(GetEnv("JWT_SECRET"))
 	// Token created
 	claims := jwt.MapClaims{
 		"username": username,

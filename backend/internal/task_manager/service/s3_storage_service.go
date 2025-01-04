@@ -51,7 +51,6 @@ func UploadFileToS3(bucketName, objectKey, filePath string, expirationDays int) 
 			Bucket: &bucketName,
 			Key:    &objectKey,
 			Body:   file,
-			//ACL:    types.ObjectCannedACLPublicRead, // optional, restriction
 			Metadata: map[string]string{
 				"Expires": expiration,
 			},

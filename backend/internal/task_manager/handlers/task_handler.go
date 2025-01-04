@@ -72,9 +72,8 @@ func TaskSubmit(c *gin.Context) {
 
 	transResponse, err := usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
 
-	log.Printf("transresponse: %s", transResponse)
-	return
-	// -------------------------------- wont reach ----------------------//
+	//log.Printf("transresponse: %s", transResponse)
+
 	downLink, err := CreateDownloadLinkWithMdString(transResponse)
 	//covert md into html
 	if err != nil {

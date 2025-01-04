@@ -29,6 +29,7 @@ func NewGPTTranslator() *GPTTranslator {
 	return &GPTTranslator{
 		client: client,
 	}
+	
 }
 
 /*
