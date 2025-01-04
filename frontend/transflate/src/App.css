@@ -1,125 +1,170 @@
-/* 全局样式 */
+/* 通用设置 */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    color: #ffffff;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    color: #333;
+    height: 100vh;
 }
 
-/* 表单容器 */
+/* 表单容器样式 */
 form {
-    background: #fff;
+    background: rgba(0, 0, 0, 0.8);
     padding: 20px 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-/* 标题 */
-h2 {
-    margin: 0 0 20px;
+    border-radius: 10px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
+    width: 300px;
+}
+
+h2 {
     font-size: 24px;
-    color: #555;
+    margin-bottom: 20px;
+    color: #00d4ff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
-/* 输入框和选择框 */
-input[type="text"],
-input[type="password"],
-input[type="file"],
-select {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
+/* 输入框样式 */
+input[type="text"], input[type="password"], select {
     width: 100%;
-    box-sizing: border-box;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #00d4ff;
+    border-radius: 5px;
+    background: transparent;
+    color: #ffffff;
+    outline: none;
+    font-size: 14px;
+    transition: all 0.3s;
 }
 
-/* 按钮 */
+input[type="text"]:focus, input[type="password"]:focus, select:focus {
+    border-color: #00ffab;
+    box-shadow: 0 0 8px #00ffab;
+}
+
+/* 按钮样式 */
 button {
-    padding: 10px;
+    background: linear-gradient(90deg, #00d4ff, #00ffab);
+    border: none;
+    color: #000000;
+    padding: 10px 20px;
     font-size: 16px;
     font-weight: bold;
-    color: #fff;
-    background: #007bff;
-    border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s;
 }
 
 button:hover {
-    background: #0056b3;
+    background: linear-gradient(90deg, #00ffab, #00d4ff);
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 255, 171, 0.5);
 }
 
-/* 提示信息 */
+button:disabled {
+    background: #555555;
+    cursor: not-allowed;
+}
+
+/* 链接样式 */
 a {
+    color: #00ffab;
     text-decoration: none;
-    color: #007bff;
-    font-weight: bold;
-    transition: color 0.3s ease;
+    transition: color 0.3s;
 }
 
 a:hover {
-    color: #0056b3;
+    color: #00d4ff;
 }
 
+/* 加载状态提示 */
 p {
-    text-align: center;
-    margin: 0;
+    margin-top: 10px;
     font-size: 14px;
-    color: #666;
+    color: #00ffab;
+    animation: blink 1.5s infinite;
 }
 
-/* 下载链接展示 */
-div {
-    text-align: center;
-    margin-top: 20px;
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
-a[target="_blank"] {
+/* 页面特定布局调整 */
+form > div {
+    margin-top: 10px;
+}
+
+form > div > p {
+    font-size: 14px;
+    color: #cccccc;
+}
+
+/* 隐藏默认文件选择框 */
+input[type="file"] {
+    display: none;
+}
+
+/* 自定义文件选择按钮 */
+.file-label {
     display: inline-block;
-    padding: 10px 15px;
-    background: #28a745;
-    color: #fff;
-    border-radius: 4px;
+    padding: 10px 20px;
+    background: linear-gradient(90deg, #00d4ff, #00ffab);
+    color: #000000;
     font-size: 14px;
-    text-decoration: none;
-    transition: background-color 0.3s ease;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
 }
 
-a[target="_blank"]:hover {
-    background: #218838;
+.file-label:hover {
+    background: linear-gradient(90deg, #00ffab, #00d4ff);
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 255, 171, 0.5);
 }
 
-/* 响应式支持 */
-@media (max-width: 480px) {
-    form {
-        padding: 15px;
-    }
+/* 显示已选文件的样式 */
+.file-name {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #cccccc;
+    text-align: center;
+}
 
-    h2 {
-        font-size: 20px;
-    }
+/* 下拉框样式 */
+select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #00d4ff;
+    border-radius: 5px;
+    background: #ffffff; /* 背景设置为白色以提升对比度 */
+    color: #000000; /* 字体颜色设置为黑色 */
+    outline: none;
+    font-size: 14px;
+    transition: all 0.3s;
+}
 
-    button {
-        font-size: 14px;
-    }
+/* 鼠标悬停时的效果 */
+select:hover {
+    border-color: #00ffab;
+    box-shadow: 0 0 8px #00ffab;
+}
 
-    input[type="text"],
-    input[type="password"],
-    input[type="file"],
-    select {
-        font-size: 14px;
-    }
+/* 下拉框选项样式（支持浏览器内显示的选项样式） */
+option {
+    color: #000000; /* 字体颜色为黑色 */
+    background-color: #ffffff; /* 背景为白色 */
 }

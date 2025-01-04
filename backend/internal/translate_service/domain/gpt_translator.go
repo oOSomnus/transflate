@@ -29,7 +29,7 @@ func NewGPTTranslator() *GPTTranslator {
 	return &GPTTranslator{
 		client: client,
 	}
-	
+
 }
 
 /*
@@ -53,7 +53,7 @@ func (g *GPTTranslator) Translate(prevContext, text string) (string, error) {
 			Messages: openai.F(
 				[]openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(
-						"You are a professional translator. Translate the following English text into Chinese. Ignore random characters or symbols, and focus on the meaningful content. Provide the result in markdown format.",
+						"You are a professional translator. Translate the following English text into Chinese. Ignore random characters or symbols, and focus on the meaningful content. Provide the result in markdown format. You don't need to translate the previous context.",
 					),
 					openai.UserMessage("Previous context for reference: " + prevContext),
 					openai.UserMessage("Text to translate: " + text),

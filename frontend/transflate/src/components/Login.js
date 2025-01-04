@@ -19,13 +19,35 @@ const Login = () => {
         }
     };
 
+    const handleRegisterRedirect = () => {
+        navigate('/register');
+    };
+
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>登录</h2>
-            <input type="text" placeholder="用户名" value={username} onChange={(e) => setUsername(e.target.value)} required />
-            <input type="password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <button type="submit">登录</button>
-        </form>
+        <div>
+            <form onSubmit={handleSubmit}>
+                <h2>登录</h2>
+                <input
+                    type="text"
+                    placeholder="用户名"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                />
+                <input
+                    type="password"
+                    placeholder="密码"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
+                <button type="submit">登录</button>
+            </form>
+            <div style={{ marginTop: '10px' }}>
+                <p>还没有账号？</p>
+                <button onClick={handleRegisterRedirect}>去注册</button>
+            </div>
+        </div>
     );
 };
 

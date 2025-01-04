@@ -1,9 +1,10 @@
 import axios from 'axios';
+import {getToken} from "./utils";
 
 const API = axios.create({ baseURL: 'http://localhost:8080' });
 
 API.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    const token = getToken()
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,6 +22,6 @@ export const register = (username, password) =>
     });
 
 export const uploadPDF = (formData) =>
-    API.post('/upload', formData, {
+    API.post('/submit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
