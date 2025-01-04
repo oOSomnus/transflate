@@ -10,6 +10,17 @@ API.interceptors.request.use((config) => {
     return config;
 });
 
-export const login = (username, password) => API.post('/login', { username, password });
-export const register = (username, password) => API.post('/register', { username, password });
-export const uploadPDF = (formData) => API.post('/upload', formData);
+export const login = (username, password) =>
+    API.post('/login', JSON.stringify({ username, password }), {
+        headers: { 'Content-Type': 'application/json' },
+    });
+
+export const register = (username, password) =>
+    API.post('/register', JSON.stringify({ username, password }), {
+        headers: { 'Content-Type': 'application/json' },
+    });
+
+export const uploadPDF = (formData) =>
+    API.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });

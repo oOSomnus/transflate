@@ -2,13 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"github.com/oOSomnus/transflate/internal/task_manager/handlers"
-	"github.com/oOSomnus/transflate/internal/task_manager/service"
-	"log"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/cmd/task_manager/config"
+	"github.com/oOSomnus/transflate/internal/task_manager/handlers"
+	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"github.com/oOSomnus/transflate/pkg/middleware"
+	"log"
 )
 
 func init() {
@@ -25,6 +25,16 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Use(
+		cors.New(
+			cors.Config{
+				AllowOrigins:     []string{"http://localhost:3000"},
+				AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+				AllowHeaders:     []string{"Content-Type", "Authorization"},
+				AllowCredentials: true,
+			},
+		),
+	)
 	r.POST("/login", handlers.Login)
 	r.POST("/register", handlers.Register)
 	auth := r.Group("/")
