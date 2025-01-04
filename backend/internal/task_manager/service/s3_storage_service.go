@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-const (
-	BucketName = "transflate-bucket"
-)
-
 /*
 UploadFileToS3 uploads a local file to a specified S3 bucket.
 

@@ -97,6 +97,8 @@ Returns:
   - (error): An error if the process of creating the file, converting the Markdown, or generating the link fails.
 */
 func CreateDownloadLinkWithMdString(mdString string) (string, error) {
+	utils.LoadEnv()
+	bucketName := utils.GetEnv("S3_BUCKET_NAME")
 	mdTmpFile, err := os.CreateTemp("", "respMd-*.md")
 	if err != nil {
 		log.Fatalln(errors.Wrap(err, "Error creating temp file"))
@@ -111,11 +113,11 @@ func CreateDownloadLinkWithMdString(mdString string) (string, error) {
 	if err != nil {
 		log.Fatalln(errors.Wrap(err, "Error writing to temp file"))
 	}
-	err = service.UploadFileToS3(service.BucketName, "mds/"+filepath.Base(mdTmpFile.Name()), mdTmpFile.Name(), 1)
+	err = service.UploadFileToS3(bucketName, "mds/"+filepath.Base(mdTmpFile.Name()), mdTmpFile.Name(), 1)
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to upload file")
 	}
-	downLink, err := service.GeneratePresignedURL(service.BucketName, "mds/"+filepath.Base(mdTmpFile.Name()), time.Hour)
+	downLink, err := service.GeneratePresignedURL(bucketName, "mds/"+filepath.Base(mdTmpFile.Name()), time.Hour)
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to generate presigned url")
 	}

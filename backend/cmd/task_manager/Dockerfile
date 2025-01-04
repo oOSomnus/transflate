@@ -21,9 +21,7 @@ FROM alpine:3.18
 WORKDIR /app
 
 # wkhtmltopdf
-RUN apk add --no-cache bash curl font-noto-cjk&& \
-    curl -L -o /usr/local/bin/wkhtmltopdf https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltopdf-alpine-static-amd64 && \
-    chmod +x /usr/local/bin/wkhtmltopdf
+RUN apk add --no-cache bash curl
 
 # copy compiled bin
 COPY --from=builder /app/task_manager /app/task_manager
