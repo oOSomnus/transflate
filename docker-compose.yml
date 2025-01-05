@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ocr_service:
     build:
@@ -56,7 +54,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: frontend/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "80:80"
     networks:

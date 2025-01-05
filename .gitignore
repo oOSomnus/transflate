@@ -22,7 +22,7 @@ go.work
 go.work.sum
 
 # env file
-.env
+backend/.env
 
 # React specific
 node_modules/
