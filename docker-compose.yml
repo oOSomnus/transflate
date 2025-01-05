@@ -61,6 +61,9 @@ services:
       - "80:80"
     networks:
       - transflate
+    environment:
+      REACT_APP_API_URL: http://task_manager:8080
+
 volumes:
   postgres_data:
 
