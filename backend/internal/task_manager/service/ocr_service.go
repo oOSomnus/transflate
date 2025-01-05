@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/oOSomnus/transflate/pkg/utils"
 	"sync"
 	"time"
 
@@ -19,8 +20,10 @@ var (
 func getOcrGRPCConn() (*grpc.ClientConn, error) {
 	grpcConnOnce.Do(
 		func() {
+			utils.LoadEnv()
+			grpcServiceName := utils.GetEnv("OCR_CONTAINER_NAME")
 			grpcConn, grpcConnErr = grpc.NewClient(
-				"localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpcServiceName+":50051", grpc.WithTransportCredentials(insecure.NewCredentials()),
 			)
 		},
 	)

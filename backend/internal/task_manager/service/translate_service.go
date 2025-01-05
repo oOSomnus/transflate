@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/oOSomnus/transflate/pkg/utils"
 	"log"
 	"sync"
 	"time"
@@ -20,8 +21,10 @@ var (
 func getTransGrpcConn() (*grpc.ClientConn, error) {
 	transGrpcOnce.Do(
 		func() {
+			utils.LoadEnv()
+			grpcServiceName := utils.GetEnv("TRANSLATE_CONTAINER_NAME")
 			transGrpcConn, transGrpcErr = grpc.NewClient(
-				"localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpcServiceName+":50052", grpc.WithTransportCredentials(insecure.NewCredentials()),
 			)
 			if transGrpcErr != nil {
 				log.Printf("TransGrpcErr: %v", transGrpcErr)
