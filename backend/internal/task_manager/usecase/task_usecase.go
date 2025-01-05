@@ -43,7 +43,7 @@ func ProcessOCRAndTranslate(usernameStr string, fileContent []byte, lang string)
 	numPages := int(ocrResponse.PageNum)
 	err = DecreaseBalance(usernameStr, numPages)
 	if err != nil {
-		log.Println("Error processing ocr response.")
+		log.Println("Error decreasing balance.")
 		return "", err
 	}
 	log.Printf("Username: %s", usernameStr)

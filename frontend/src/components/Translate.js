@@ -45,6 +45,7 @@ const Translate = () => {
             <label htmlFor="file-upload" className="file-label">
                 选择文件
             </label>
+            <div className="spacer"></div>
             <input
                 id="file-upload"
                 type="file"

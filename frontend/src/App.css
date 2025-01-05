@@ -168,3 +168,7 @@ option {
     color: #000000; /* 字体颜色为黑色 */
     background-color: #ffffff; /* 背景为白色 */
 }
+
+.spacer {
+    height: 20px; /* 或者使用 margin */
+}
