@@ -17,7 +17,7 @@ func init() {
 }
 
 func main() {
-	gin.SetMode(gin.DebugMode)
+	gin.SetMode(gin.ReleaseMode)
 	config.ConnectDB()
 
 	if config.DB == nil {
@@ -25,6 +25,7 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.SetTrustedProxies([]string{"172.18.0.0/16"})
 	r.Use(
 		cors.New(
 			cors.Config{

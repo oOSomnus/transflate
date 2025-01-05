@@ -5,9 +5,11 @@ import Register from './components/Register';
 import Translate from './components/Translate';
 import { isAuthenticated } from './utils';
 import './App.css'
+import Header from "./components/Header";
 const App = () => {
   return (
       <Router>
+          <Header />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

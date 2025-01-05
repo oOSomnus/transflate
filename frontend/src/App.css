@@ -172,3 +172,31 @@ option {
 .spacer {
     height: 20px; /* 或者使用 margin */
 }
+
+/* components/Header.css */
+.header {
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+    padding: 15px 30px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+    border-bottom-left-radius: 20px;  /* 圆润左下角 */
+    border-bottom-right-radius: 20px; /* 圆润右下角 */
+}
+
+.header h1 {
+    font-size: 32px;
+    color: #00d4ff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.header h3 {
+    font-size: 12px;
+    color: #00ffab;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+}

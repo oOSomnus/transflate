@@ -17,15 +17,24 @@ const Register = () => {
             alert('注册失败');
         }
     };
-
-    return (
-        <form onSubmit={handleSubmit}>
-            <h2>注册</h2>
-            <input type="text" placeholder="用户名" value={username} onChange={(e) => setUsername(e.target.value)} required />
-            <input type="password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <button type="submit">注册</button>
-        </form>
-    );
+    const handleLoginRedirect = () => {
+        navigate('/login');
+    };
+    return (<div>
+    <form onSubmit={handleSubmit}>
+        <h2>注册</h2>
+        <input type="text" placeholder="用户名" value={username} onChange={(e) => setUsername(e.target.value)}
+               required/>
+        <input type="password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)}
+               required/>
+        <button type="submit">注册</button>
+    </form>
+    <div style={{marginTop: '10px'}}>
+        <p>已有账号？</p>
+        <button onClick={handleLoginRedirect}>去登录</button>
+    </div>
+        </div>
+);
 };
 
 export default Register;
