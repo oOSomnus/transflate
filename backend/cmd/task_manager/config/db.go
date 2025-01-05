@@ -22,7 +22,7 @@ func ConnectDB() {
 	utils.LoadEnv()
 	username := utils.GetEnv("PG_USERNAME")
 	password := utils.GetEnv("PG_PASSWORD")
-	host := "127.0.0.1"
+	host := utils.GetEnv("PG_HOST")
 	port := "5432"
 	dbname := "postgres"
 	sslmode := "disable"

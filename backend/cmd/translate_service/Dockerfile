@@ -14,7 +14,7 @@ COPY pkg ./pkg
 COPY api ./api
 
 # compile binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/task_manager ./cmd/task_manager
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/translate_service ./cmd/translate_service
 
 FROM alpine:3.18
 

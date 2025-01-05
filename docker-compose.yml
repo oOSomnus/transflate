@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  ocr_service:
+    build:
+      context: ./backend
+      dockerfile: cmd/ocr_service/Dockerfile
+    ports:
+      - "50051:50051"
+    depends_on:
+      - postgres
+    networks:
+      - transflate
+
+  task_manager:
+    build:
+      context: ./backend
+      dockerfile: cmd/task_manager/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - transflate
+
+  translate_service:
+    build:
+      context: ./backend
+      dockerfile: cmd/translate_service/Dockerfile
+    ports:
+      - "50052:50052"
+    depends_on:
+      - postgres
+    networks:
+      - transflate
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${PG_USERNAME}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: public
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - transflate
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - transflate
+volumes:
+  postgres_data:
+
+networks:
+  transflate:

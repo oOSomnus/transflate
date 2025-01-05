@@ -4,6 +4,7 @@ import (
 	"github.com/oOSomnus/transflate/internal/translate_service/domain"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"log"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -27,7 +28,9 @@ func TranslateText(longString string) (string, error) {
 	var wg sync.WaitGroup
 	results := make([]string, len(chunks))
 	errors := make([]error, len(chunks))
-	workersPool := make(chan struct{}, 8)
+	// Acuiring current CPU nums
+	numCPU := runtime.NumCPU()
+	workersPool := make(chan struct{}, numCPU*2)
 	translator := domain.NewGPTTranslator()
 	for i, chunk := range chunks {
 		wg.Add(1)

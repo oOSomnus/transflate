@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"sync"
@@ -105,11 +106,14 @@ func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (
 	// Worker pool for concurrent OCR
 	ocrResults := make([]string, len(files))
 
+	// Acquiring number of cpus
+	numCPU := runtime.NumCPU()
+
 	// Acquiring gosseract pool
-	gossPool := pool.NewGosseractPool(9, lang)
+	gossPool := pool.NewGosseractPool(numCPU+1, lang)
 	defer gossPool.Close()
 	var wg sync.WaitGroup
-	workerPool := make(chan struct{}, 9) // Limit to 9 concurrent workers
+	workerPool := make(chan struct{}, numCPU+1)
 	log.Println("Starting worker pool ...")
 	for i, file := range files {
 		wg.Add(1)
