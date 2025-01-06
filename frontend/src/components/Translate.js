@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadPDF } from '../api';
+import {logout} from "../utils";
 
 const Translate = () => {
     const [file, setFile] = useState(null);
@@ -8,6 +9,12 @@ const Translate = () => {
     const [downloadLink, setDownloadLink] = useState(''); // 服务端返回的文件链接
     const [isLoading, setIsLoading] = useState(false); // 是否加载中
     const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        alert('成功登出');
+        navigate(0);
+    }
 
     const handleUpload = async (e) => {
         e.preventDefault();
@@ -24,7 +31,7 @@ const Translate = () => {
         setIsLoading(true); // 开始加载
 
         try {
-            const { data } = await uploadPDF(formData);
+            const {data} = await uploadPDF(formData);
             setDownloadLink(data.data); // 服务端返回的下载链接
         } catch (error) {
             if (error.response?.status === 401) {
@@ -38,46 +45,50 @@ const Translate = () => {
         }
     };
 
-    return (
-        <form onSubmit={handleUpload}>
-            <h2>PDF 翻译</h2>
-            {/* 自定义文件选择按钮 */}
-            <label htmlFor="file-upload" className="file-label">
-                选择文件
-            </label>
-            <div className="spacer"></div>
-            <input
-                id="file-upload"
-                type="file"
-                accept=".pdf"
-                onChange={(e) => {
-                    setFile(e.target.files[0]);
-                }}
-                disabled={isLoading} // 禁用上传输入框
-            />
-            {/* 显示选中文件名 */}
-            {file && <p className="file-name">已选择：{file.name}</p>}
-            <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value)}
-                disabled={isLoading} // 禁用语言选择
-            >
-                <option value="eng">英文</option>
-                <option value="chi_sim">中文</option>
-                {/* 添加其他语言选项 */}
-            </select>
-            <button type="submit" disabled={isLoading}>
-                {isLoading ? '处理中...' : '提交'}
-            </button>
-            {isLoading && <p>处理中，请稍候...</p>} {/* 显示加载提示 */}
-            {downloadLink && (
-                <div>
-                    <p>翻译完成！</p>
-                    <a href={downloadLink} target="_blank" rel="noopener noreferrer">下载翻译文件</a>
-                </div>
-            )}
-        </form>
-    );
+    return (<div>
+    <form onSubmit={handleUpload}>
+        <h2>PDF 翻译</h2>
+        {/* 自定义文件选择按钮 */}
+        <label htmlFor="file-upload" className="file-label">
+            选择文件
+        </label>
+        <div className="spacer"/>
+        <input
+            id="file-upload"
+            type="file"
+            accept=".pdf"
+            onChange={(e) => {
+                setFile(e.target.files[0]);
+            }}
+            disabled={isLoading} // 禁用上传输入框
+        />
+        {/* 显示选中文件名 */}
+        {file && <p className="file-name">已选择：{file.name}</p>}
+        <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+            disabled={isLoading} // 禁用语言选择
+        >
+            <option value="eng">英文</option>
+            <option value="chi_sim">中文</option>
+            {/* 添加其他语言选项 */}
+        </select>
+        <button type="submit" disabled={isLoading}>
+            {isLoading ? '处理中...' : '提交'}
+        </button>
+        {isLoading && <p>处理中，请稍候...</p>} {/* 显示加载提示 */}
+        {downloadLink && (
+            <div>
+                <p>翻译完成！</p>
+                <a href={downloadLink} target="_blank" rel="noopener noreferrer">下载翻译文件</a>
+            </div>
+        )}
+    </form>
+    <div style={{marginTop: '10px'}}>
+        <button onClick={handleLogout}>登出</button>
+    </div>
+        </div>
+);
 };
 
 export default Translate;

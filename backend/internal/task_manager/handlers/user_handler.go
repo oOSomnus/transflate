@@ -5,6 +5,7 @@ import (
 	"github.com/oOSomnus/transflate/internal/task_manager/domain"
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
+	"log"
 	"net/http"
 )
 
@@ -60,11 +61,13 @@ func Register(c *gin.Context) {
 	var req domain.UserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		log.Println("Error: Invalid request")
 		return
 	}
 	err := usecase.CreateUser(req.Username, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("Error: Failed to create user")
 		return
 	}
 	c.JSON(

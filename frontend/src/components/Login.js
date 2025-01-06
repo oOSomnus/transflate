@@ -13,7 +13,7 @@ const Login = () => {
         try {
             const { data } = await login(username, password);
             saveToken(data.token);
-            navigate('/');
+            navigate(0);
         } catch (error) {
             alert('登录失败');
         }
