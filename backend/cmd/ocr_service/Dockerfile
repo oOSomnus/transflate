@@ -48,7 +48,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # copy origin code
-COPY engine/tesseract /build/tesseract
+#COPY engine/tesseract /build/tesseract
+RUN git clone https://github.com/tesseract-ocr/tesseract.git /build/tesseract
 
 WORKDIR /build/tesseract
 
