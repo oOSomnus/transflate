@@ -41,6 +41,7 @@ func main() {
 	auth := r.Group("/")
 	auth.Use(middleware.AuthMiddleware())
 	auth.POST("/submit", handlers.TaskSubmit)
+	auth.GET("/user/info", handlers.Info)
 	port := ":8080"
 	log.Printf("Starting server on %s", port)
 	defer func(DB *sql.DB) {

@@ -137,3 +137,17 @@ func DecreaseBalance(username string, balance int) error {
 
 	return nil
 }
+
+func GetBalance(username string) (int, error) {
+	query := "SELECT balance FROM users WHERE username = $1"
+	row := config.DB.QueryRow(query, username)
+	var balance int
+	err := row.Scan(&balance)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, errors.New("user not found")
+		}
+		return 0, err
+	}
+	return balance, nil
+}

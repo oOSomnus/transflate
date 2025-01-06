@@ -76,3 +76,29 @@ func Register(c *gin.Context) {
 		},
 	)
 }
+
+func Info(c *gin.Context) {
+	log.Println("Getting user info ...")
+	username, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User unauthorized"})
+	}
+	usernameStr, ok := username.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username"})
+	}
+	balance, err := usecase.CheckBalance(usernameStr)
+	if err != nil {
+		c.JSON(
+			http.StatusBadRequest, gin.H{
+				"error": "Error checking balance",
+			},
+		)
+	}
+	c.JSON(
+		http.StatusOK, gin.H{
+			"username": usernameStr,
+			"balance":  balance,
+		},
+	)
+}

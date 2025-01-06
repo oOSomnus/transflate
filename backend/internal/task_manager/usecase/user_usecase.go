@@ -96,3 +96,14 @@ func DecreaseBalance(username string, balance int) error {
 	}
 	return nil
 }
+
+func CheckBalance(username string) (int, error) {
+	balance, err := repository.GetBalance(username)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get balance: %w", err)
+	}
+	if balance < 0 {
+		return 0, errors.New("negative balance")
+	}
+	return balance, nil
+}
