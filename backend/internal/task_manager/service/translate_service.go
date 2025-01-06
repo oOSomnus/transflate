@@ -2,14 +2,13 @@ package service
 
 import (
 	"context"
+	pbt "github.com/oOSomnus/transflate/api/generated/translate"
 	"github.com/oOSomnus/transflate/pkg/utils"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"sync"
 	"time"
-
-	pbt "github.com/oOSomnus/transflate/api/generated/translate"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
@@ -49,7 +48,7 @@ func TranslateText(text string) (*pbt.TranslateResult, error) {
 	}
 
 	client := pbt.NewTranslateServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
 	response, err := client.ProcessTranslation(ctx, &pbt.TranslateRequest{Text: text})

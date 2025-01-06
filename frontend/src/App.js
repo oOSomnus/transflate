@@ -16,10 +16,14 @@ const App = () => {
                 element={isAuthenticated() ? <Navigate to="/" /> : <Login />}
             />
           <Route path="/register" element={<Register />} />
-          <Route
-              path="/"
-              element={isAuthenticated() ? <Translate /> : <Navigate to="/login" />}
-          />
+          {/*<Route*/}
+          {/*    path="/"*/}
+          {/*    element={isAuthenticated() ? <Translate /> : <Navigate to="/login" />}*/}
+          {/*/>*/}
+            <Route
+                path="/"
+                element=<Translate />
+            />
         </Routes>
       </Router>
   );

@@ -27,3 +27,4 @@ export const uploadPDF = (formData) =>
     API.post('/submit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
+
