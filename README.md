@@ -74,6 +74,11 @@ A comprehensive platform integrating OCR and translation services, supporting mu
 - **Translation Service**: Integrates a GPT translation module for high-quality text translations.
 - **Task Management**: Supports the creation, updating, and querying of user tasks.
 
+## Dependencies
+
+This project uses the following open source software:
+- **[Tesseract OCR] https://github.com/tesseract-ocr/tesseract.git**: Used for text recognition, licensed under the Apache License 2.0.
+
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
