@@ -26,7 +26,7 @@ A comprehensive platform integrating OCR and translation services, supporting mu
 1. Clone the repository:
    ```bash
    git clone https://github.com/oOSomnus/transflate.git
-   cd transflateg
+   cd transflate
    ```
 
 2. Adjust nginx and environmental variables configuration for your own environment.
