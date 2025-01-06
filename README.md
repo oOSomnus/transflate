@@ -13,9 +13,6 @@ A comprehensive platform integrating OCR and translation services, supporting mu
     - `bin`: Scripts for Docker builds and proto file generation.
 
 - **frontend**: Frontend service, featuring a React-based interface and Nginx configuration.
-
-- **docker-compose.yml**: Docker Compose configuration file for service orchestration and deployment.
-
 ## Quick Start
 
 ### Prerequisites
