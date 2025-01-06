@@ -28,3 +28,11 @@ export const uploadPDF = (formData) =>
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
+export const fetchUserInfo = async () => {
+   try {
+       return await API.get('/user/info');
+   }catch (e) {
+       console.error(e);
+       throw e;
+   }
+};

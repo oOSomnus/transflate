@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadPDF } from '../api';
-import { logout, fetchUserInfo } from "../utils";
+import { uploadPDF, fetchUserInfo } from '../api';
+import { logout} from "../utils";
 
 const Translate = () => {
     const [file, setFile] = useState(null);
@@ -9,7 +9,7 @@ const Translate = () => {
     const [downloadLink, setDownloadLink] = useState(''); // 服务端返回的文件链接
     const [isLoading, setIsLoading] = useState(false); // 是否加载中
     const [isSidebarVisible, setIsSidebarVisible] = useState(false); // 控制侧边栏显示
-    const [userInfo, setUserInfo] = useState({ username: '', quota: 0 }); // 用户信息
+    const [userInfo, setUserInfo] = useState({ username: '', balance: 0 }); // 用户信息
     const navigate = useNavigate();
 
     const handleLogout = () => {

@@ -63,8 +63,3 @@ export const logout = () => {
     localStorage.removeItem('token');
 };
 
-export const fetchUserInfo = async () => {
-    // const { data } = await api.get('/user/info');
-    const data = {username: "Han", quota: 1000}
-    return data; // 假设后端返回 { username: 'xxx', quota: 100 }
-};
