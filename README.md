@@ -28,8 +28,8 @@ A comprehensive platform integrating OCR and translation services, supporting mu
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd <repository-name>
+   git clone https://github.com/oOSomnus/transflate.git
+   cd transflateg
    ```
 
 2. Adjust nginx and environmental variables configuration for your own environment.
