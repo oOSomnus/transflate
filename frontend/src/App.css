@@ -1,10 +1,12 @@
 /* 通用设置 */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
 body {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Dancing Script', cursive;
     margin: 0;
     padding: 0;
-    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-    color: #ffffff;
+    background: #f5deb3; /* 米色背景 */
+    color: #4b3832; /* 深棕色字体 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -13,19 +15,19 @@ body {
 
 /* 表单容器样式 */
 form {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(255, 255, 255, 0.9);
     padding: 20px 30px;
     border-radius: 10px;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
     width: 300px;
+    font-family: 'Dancing Script', cursive;
 }
 
 h2 {
-    font-size: 24px;
+    font-size: 28px;
     margin-bottom: 20px;
-    color: #00d4ff;
-    text-transform: uppercase;
+    color: #4b3832;
     letter-spacing: 2px;
 }
 
@@ -34,26 +36,111 @@ input[type="text"], input[type="password"], select {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #00d4ff;
+    border: 1px solid #d8b384;
     border-radius: 5px;
-    background: transparent;
-    color: #ffffff;
+    background: #fffaf0; /* 淡米色背景 */
+    color: #4b3832;
     outline: none;
-    font-size: 14px;
+    font-size: 16px;
     transition: all 0.3s;
 }
 
 input[type="text"]:focus, input[type="password"]:focus, select:focus {
-    border-color: #00ffab;
-    box-shadow: 0 0 8px #00ffab;
+    border-color: #a67c52;
+    box-shadow: 0 0 8px #a67c52;
 }
 
 /* 按钮样式 */
 button {
-    background: linear-gradient(90deg, #00d4ff, #00ffab);
+    background: #d8b384;
     border: none;
-    color: #000000;
+    color: #4b3832;
     padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Dancing Script', cursive;
+}
+
+button:hover {
+    background: #a67c52;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(166, 124, 82, 0.5);
+}
+
+/* 链接样式 */
+a {
+    color: #a67c52;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: #4b3832;
+}
+
+/* 自定义文件选择按钮 */
+.file-label {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #d8b384;
+    color: #4b3832;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.file-label:hover {
+    background: #a67c52;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(166, 124, 82, 0.5);
+}
+
+/* 头部样式 */
+.header {
+    background: #fffaf0;
+    color: #4b3832;
+    padding: 15px 30px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.header h1 {
+    font-size: 36px;
+    color: #4b3832;
+    margin: 0;
+}
+
+.header h3 {
+    font-size: 16px;
+    color: #a67c52;
+    margin: 0;
+}
+
+/* 自定义文件上传容器 */
+.custom-file-upload {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px; /* 调整间距 */
+    font-family: 'Dancing Script', cursive;
+}
+
+.custom-file-upload input[type="file"] {
+    display: none; /* 隐藏默认文件选择框 */
+}
+
+.custom-file-upload label {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #d8b384;
+    color: #4b3832;
     font-size: 16px;
     font-weight: bold;
     border-radius: 5px;
@@ -61,142 +148,24 @@ button {
     transition: all 0.3s;
 }
 
-button:hover {
-    background: linear-gradient(90deg, #00ffab, #00d4ff);
+.custom-file-upload label:hover {
+    background: #a67c52;
     transform: scale(1.05);
-    box-shadow: 0 4px 10px rgba(0, 255, 171, 0.5);
+    box-shadow: 0 4px 10px rgba(166, 124, 82, 0.5);
 }
 
-button:disabled {
-    background: #555555;
-    cursor: not-allowed;
+.user-info-button {
+    background: #f5f5dc; /* 米白色背景 */
+    color: #4b3832; /* 深棕色字体 */
 }
 
-/* 链接样式 */
-a {
-    color: #00ffab;
-    text-decoration: none;
-    transition: color 0.3s;
-}
-
-a:hover {
-    color: #00d4ff;
-}
-
-/* 加载状态提示 */
-p {
-    margin-top: 10px;
-    font-size: 14px;
-    color: #00ffab;
-    animation: blink 1.5s infinite;
-}
-
-@keyframes blink {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-/* 页面特定布局调整 */
-form > div {
-    margin-top: 10px;
-}
-
-form > div > p {
-    font-size: 14px;
-    color: #cccccc;
-}
-
-/* 隐藏默认文件选择框 */
-input[type="file"] {
-    display: none;
-}
-
-/* 自定义文件选择按钮 */
-.file-label {
-    display: inline-block;
-    padding: 10px 20px;
-    background: linear-gradient(90deg, #00d4ff, #00ffab);
-    color: #000000;
-    font-size: 14px;
+/* 侧边栏样式修改 */
+.sidebar h3 {
+    font-size: 24px; /* 增大用户名字体 */
     font-weight: bold;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
+    margin-bottom: 10px;
 }
 
-.file-label:hover {
-    background: linear-gradient(90deg, #00ffab, #00d4ff);
-    transform: scale(1.05);
-    box-shadow: 0 4px 10px rgba(0, 255, 171, 0.5);
-}
-
-/* 显示已选文件的样式 */
-.file-name {
-    margin-top: 10px;
-    font-size: 14px;
-    color: #cccccc;
-    text-align: center;
-}
-
-/* 下拉框样式 */
-select {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #00d4ff;
-    border-radius: 5px;
-    background: #ffffff; /* 背景设置为白色以提升对比度 */
-    color: #000000; /* 字体颜色设置为黑色 */
-    outline: none;
-    font-size: 14px;
-    transition: all 0.3s;
-}
-
-/* 鼠标悬停时的效果 */
-select:hover {
-    border-color: #00ffab;
-    box-shadow: 0 0 8px #00ffab;
-}
-
-/* 下拉框选项样式（支持浏览器内显示的选项样式） */
-option {
-    color: #000000; /* 字体颜色为黑色 */
-    background-color: #ffffff; /* 背景为白色 */
-}
-
-.spacer {
-    height: 20px; /* 或者使用 margin */
-}
-
-/* components/Header.css */
-.header {
-    background: rgba(0, 0, 0, 0.8);
-    color: #ffffff;
-    padding: 15px 30px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    margin-bottom: 20px;
-    border-bottom-left-radius: 20px;  /* 圆润左下角 */
-    border-bottom-right-radius: 20px; /* 圆润右下角 */
-}
-
-.header h1 {
-    font-size: 32px;
-    color: #00d4ff;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin: 0;
-}
-
-.header h3 {
-    font-size: 12px;
-    color: #00ffab;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin: 0;
+.sidebar p {
+    font-size: 12px; /* 减小剩余额度字体 */
 }

@@ -50,8 +50,8 @@ const Translate = () => {
         setIsSidebarVisible(!isSidebarVisible);
         if (!isSidebarVisible) {
             try {
-                const userData = await fetchUserInfo();
-                setUserInfo(userData);
+                const response = await fetchUserInfo();
+                setUserInfo({username: response.data.username, balance: response.data.balance});
             } catch (error) {
                 console.error('获取用户信息失败', error);
             }
@@ -59,21 +59,21 @@ const Translate = () => {
     };
 
     return (
-        <div style={{ position: 'relative' }}>
+        <div style={{position: 'relative'}}>
             <form onSubmit={handleUpload}>
                 <h2>PDF 翻译</h2>
-                <label htmlFor="file-upload" className="file-label">
-                    选择文件
-                </label>
-                <div className="spacer" />
-                <input
-                    id="file-upload"
-                    type="file"
-                    accept=".pdf"
-                    onChange={(e) => setFile(e.target.files[0])}
-                    disabled={isLoading}
-                />
-                {file && <p className="file-name">已选择：{file.name}</p>}
+                <div className="custom-file-upload">
+                    <input
+                        id="file-upload"
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e) => setFile(e.target.files[0])}
+                        disabled={isLoading}
+                    />
+                    <label htmlFor="file-upload">
+                        {file ? `已选择: ${file.name}` : "点击选择文件"}
+                    </label>
+                </div>
                 <select
                     value={lang}
                     onChange={(e) => setLang(e.target.value)}
@@ -96,52 +96,20 @@ const Translate = () => {
                     </div>
                 )}
             </form>
-            <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+
+            <div style={{marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px'}}>
                 <button onClick={handleLogout}>登出</button>
-                <button
-                    style={{
-                        background: '#007BFF',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '10px 20px',
-                        cursor: 'pointer',
-                        borderRadius: '5px'
-                    }}
-                    onClick={toggleSidebar}
-                >
+                <button className="user-info-button" onClick={toggleSidebar}>
                     用户信息
                 </button>
             </div>
             {/* 侧边栏 */}
             {isSidebarVisible && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: '0',
-                        left: '0',
-                        height: '100%',
-                        width: '300px',
-                        background: '#333',
-                        color: '#fff',
-                        padding: '20px',
-                        boxShadow: '2px 0 5px rgba(0,0,0,0.5)'
-                    }}
-                >
+                <div>
                     <h3>用户信息</h3>
                     <p>用户名: {userInfo.username}</p>
-                    <p>剩余额度: {userInfo.quota}</p>
-                    <button
-                        onClick={toggleSidebar}
-                        style={{
-                            marginTop: '20px',
-                            background: '#555',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '10px 20px',
-                            cursor: 'pointer',
-                            borderRadius: '5px'
-                        }}
-                    >
+                    <p>剩余额度: {userInfo.balance}</p>
+                    <button onClick={toggleSidebar}>
                         关闭
                     </button>
                 </div>

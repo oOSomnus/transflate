@@ -48,7 +48,7 @@ func TranslateText(text string) (*pbt.TranslateResult, error) {
 	}
 
 	client := pbt.NewTranslateServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	response, err := client.ProcessTranslation(ctx, &pbt.TranslateRequest{Text: text})
