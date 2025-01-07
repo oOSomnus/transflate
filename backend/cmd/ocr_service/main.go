@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
 	"github.com/oOSomnus/transflate/internal/ocr_service/server"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"os"
 )
 
 func init() {
@@ -14,6 +17,14 @@ func init() {
 }
 
 func main() {
+	// viper config
+	env := os.Getenv("TRANSFLATE_ENV")
+	if env == "" {
+		env = "local"
+	}
+	viper.SetConfigName(fmt.Sprintf("config.%s", env))
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("..")
 	// Start gRPC service
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {

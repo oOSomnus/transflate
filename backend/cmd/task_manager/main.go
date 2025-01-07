@@ -2,13 +2,16 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/cmd/task_manager/config"
 	"github.com/oOSomnus/transflate/internal/task_manager/handlers"
 	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"github.com/oOSomnus/transflate/pkg/middleware"
+	"github.com/spf13/viper"
 	"log"
+	"os"
 )
 
 func init() {
@@ -17,6 +20,18 @@ func init() {
 }
 
 func main() {
+	// viper config
+	env := os.Getenv("TRANSFLATE_ENV")
+	if env == "" {
+		env = "local"
+	}
+	viper.SetConfigName(fmt.Sprintf("config.%s", env))
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("..")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config file: %v", err)
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 	config.ConnectDB()
 

@@ -6,6 +6,7 @@ import (
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	"log"
 	"net/http"
 	"os"
@@ -97,8 +98,8 @@ Returns:
   - (error): An error if the process of creating the file, converting the Markdown, or generating the link fails.
 */
 func CreateDownloadLinkWithMdString(mdString string) (string, error) {
-	utils.LoadEnv()
-	bucketName := utils.GetEnv("S3_BUCKET_NAME")
+	//utils.LoadEnv()
+	bucketName := viper.GetString("s3.bucket.name")
 	mdTmpFile, err := os.CreateTemp("", "respMd-*.md")
 	if err != nil {
 		log.Fatalln(errors.Wrap(err, "Error creating temp file"))

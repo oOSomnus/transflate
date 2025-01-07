@@ -3,9 +3,9 @@ package domain
 import (
 	"context"
 	"errors"
-	"github.com/oOSomnus/transflate/pkg/utils"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	"github.com/spf13/viper"
 	"time"
 )
 
@@ -23,8 +23,8 @@ Returns:
   - (*GPTTranslator): A pointer to the initialized GPTTranslator instance.
 */
 func NewGPTTranslator() *GPTTranslator {
-	utils.LoadEnv()
-	apiKey := utils.GetEnv("OPENAI_API_KEY")
+	//utils.LoadEnv()
+	apiKey := viper.GetString("openai.api.key")
 	client := openai.NewClient(option.WithAPIKey(apiKey))
 	return &GPTTranslator{
 		client: client,
