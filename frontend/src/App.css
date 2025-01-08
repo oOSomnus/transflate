@@ -1,8 +1,9 @@
 /* 通用设置 */
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 body {
-    font-family: 'Dancing Script', cursive;
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
     background: #f5deb3; /* 米色背景 */
@@ -21,7 +22,7 @@ form {
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
     width: 300px;
-    font-family: 'Dancing Script', cursive;
+    font-family: 'Roboto', sans-serif;
 }
 
 h2 {
@@ -61,7 +62,7 @@ button {
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s;
-    font-family: 'Dancing Script', cursive;
+    font-family: 'Roboto', sans-serif;
 }
 
 button:hover {
@@ -129,7 +130,7 @@ a:hover {
     position: relative;
     display: inline-block;
     margin-bottom: 20px; /* 调整间距 */
-    font-family: 'Dancing Script', cursive;
+    font-family: 'Roboto', sans-serif;
 }
 
 .custom-file-upload input[type="file"] {
