@@ -3,6 +3,8 @@ services:
     build:
       context: ./backend
       dockerfile: cmd/ocr_service/Dockerfile
+    environment:
+      TRANSFLATE_ENV: production
     depends_on:
       - postgres
     networks:
@@ -12,7 +14,8 @@ services:
     build:
       context: ./backend
       dockerfile: cmd/task_manager/Dockerfile
-
+    environment:
+      TRANSFLATE_ENV: production
     depends_on:
       - postgres
     networks:
@@ -22,7 +25,8 @@ services:
     build:
       context: ./backend
       dockerfile: cmd/translate_service/Dockerfile
-
+    environment:
+      TRANSFLATE_ENV: production
     depends_on:
       - postgres
     networks:
@@ -44,6 +48,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    environment:
+      TRANSFLATE_BACKEND_HOST: task_manager
     ports:
       - "80:80"
       - "443:443"
