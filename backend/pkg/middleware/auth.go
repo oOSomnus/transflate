@@ -4,9 +4,9 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/spf13/viper"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -34,16 +34,18 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		log.Println("Validating token ...")
+		log.Printf("Validating token %s", tokenString)
 		// parse and validate Token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// check sign method
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errors.New("unexpected signing method")
-			}
-			secretKey := []byte(os.Getenv("JWT_SECRET"))
-			return secretKey, nil
-		})
+		token, err := jwt.Parse(
+			tokenString, func(token *jwt.Token) (interface{}, error) {
+				// check sign method
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, errors.New("unexpected signing method")
+				}
+				secretKey := []byte(viper.GetString("jwt.secret"))
+				return secretKey, nil
+			},
+		)
 
 		// check if valid
 		if err != nil || !token.Valid {

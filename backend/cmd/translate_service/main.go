@@ -25,7 +25,13 @@ func main() {
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
-	listener, err := net.Listen("tcp", ":50052")
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Failed to read config file: %s", err)
+	}
+	port := ":50052"
+	log.Printf("Starting server on port %s", port)
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("Error reading config file: %v", err)
 	}
 
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.DebugMode)
 	config.ConnectDB()
 
 	if config.DB == nil {
@@ -40,17 +40,18 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.SetTrustedProxies([]string{"172.18.0.0/16"})
+	r.SetTrustedProxies([]string{"172.18.0.0/16", "localhost"})
 	r.Use(
 		cors.New(
 			cors.Config{
-				AllowOrigins:     []string{"http://frontend:3000"},
+				AllowOrigins:     []string{viper.GetString("cors.allow-origin")},
 				AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 				AllowHeaders:     []string{"Content-Type", "Authorization"},
 				AllowCredentials: true,
 			},
 		),
 	)
+	log.Printf("cors setting: %s", viper.GetString("cors.allow-origin"))
 	r.POST("/login", handlers.Login)
 	r.POST("/register", handlers.Register)
 	auth := r.Group("/")

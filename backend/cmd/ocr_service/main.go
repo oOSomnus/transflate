@@ -25,6 +25,10 @@ func main() {
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Failed to read config file: %s", err)
+	}
 	// Start gRPC service
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
