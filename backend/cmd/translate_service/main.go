@@ -24,7 +24,7 @@ func main() {
 	}
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("..")
+	viper.AddConfigPath(".")
 	listener, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		log.Fatal(err)

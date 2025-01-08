@@ -27,7 +27,7 @@ func main() {
 	}
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("..")
+	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config file: %v", err)
 	}

@@ -24,7 +24,7 @@ func main() {
 	}
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("..")
+	viper.AddConfigPath(".")
 	// Start gRPC service
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
