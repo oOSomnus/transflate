@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/oOSomnus/transflate/pkg/utils"
+	"github.com/spf13/viper"
 	"os"
 	"time"
 )
@@ -23,8 +24,13 @@ Returns:
 */
 func UploadFileToS3(bucketName, objectKey, filePath string, expirationDays int) error {
 	// load default config
-	utils.LoadEnv()
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	cfg, err := config.LoadDefaultConfig(
+		context.Background(), config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(
+				viper.GetString("aws.access.key.id"), viper.GetString("aws.secret.access.key"), "",
+			),
+		), config.WithRegion(viper.GetString("aws.region")),
+	)
 	if err != nil {
 		return fmt.Errorf("unable to load config %w", err)
 	}
@@ -122,8 +128,14 @@ Returns:
 */
 
 func GeneratePresignedURL(bucketName, objectKey string, expiration time.Duration) (string, error) {
-	utils.LoadEnv()
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	//utils.LoadEnv()
+	cfg, err := config.LoadDefaultConfig(
+		context.Background(), config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(
+				viper.GetString("aws.access.key.id"), viper.GetString("aws.secret.access.key"), "",
+			),
+		), config.WithRegion(viper.GetString("aws.region")),
+	)
 	if err != nil {
 		return "", fmt.Errorf("unable to load s3 config: %w", err)
 	}

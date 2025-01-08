@@ -25,8 +25,9 @@ RUN apk add --no-cache bash curl
 
 # copy compiled bin
 COPY --from=builder /app/translate_service /app/translate_service
-COPY .env /app/.env
-
+#COPY .env /app/.env
+COPY config.local.yaml /app/config.local.yaml
+COPY config.production.yaml /app/config.production.yaml
 # expose
 EXPOSE 50052
 

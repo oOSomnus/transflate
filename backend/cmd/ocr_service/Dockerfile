@@ -79,7 +79,9 @@ RUN apt-get update && apt-get install -y \
 # merge previous stages
 COPY --from=tesseract_builder /usr/local /usr/local
 COPY --from=builder /app/ocr_service /app/ocr_service
-COPY .env /app/.env
+#COPY .env /app/.env
+COPY config.local.yaml /app/config.local.yaml
+COPY config.production.yaml /app/config.production.yaml
 
 COPY engine/ocr_trained_data/* /usr/local/share/tessdata
 

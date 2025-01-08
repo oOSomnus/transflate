@@ -23,7 +23,7 @@ go.work.sum
 
 # env file
 .env
-backend/.env
+.env
 
 # React specific
 node_modules/
@@ -58,3 +58,6 @@ certs/
 
 # tesseract
 tesseract/
+
+# configs
+config.*

@@ -3,7 +3,7 @@ package config
 import (
 	"database/sql"
 	_ "github.com/lib/pq" // PostgreSQL driver
-	"github.com/oOSomnus/transflate/pkg/utils"
+	"github.com/spf13/viper"
 	"log"
 )
 
@@ -19,10 +19,10 @@ Returns:
 
 func ConnectDB() {
 	// DB connection info
-	utils.LoadEnv()
-	username := utils.GetEnv("PG_USERNAME")
-	password := utils.GetEnv("PG_PASSWORD")
-	host := utils.GetEnv("PG_HOST")
+	//utils.LoadEnv()
+	username := viper.GetString("pg.username")
+	password := viper.GetString("pg.password")
+	host := viper.GetString("pg.host")
 	port := "5432"
 	dbname := "postgres"
 	sslmode := "disable"

@@ -23,6 +23,8 @@ build: proto
 		echo "Building $$service..."; \
 		go build -o $(OUTPUT_DIR)/$$service ./cmd/$$service; \
 	done
+	@echo "Copying config files..."; \
+	cp ./config.local.yaml $(OUTPUT_DIR)/
 
 # clean
 clean:
@@ -42,11 +44,11 @@ test:
 
 # help
 help:
-	@echo "available targers："
+	@echo "available targets："
 	@echo "  all      - gen all proto files and compile"
 	@echo "  proto    - gen proto files"
 	@echo "  build    - compile all services"
-	@echo "  clean    - clean gened files"
+	@echo "  clean    - clean generated files"
 	@echo "  fmt      - format"
 	@echo "  lint     - static check"
 	@echo "  test     - run all tests"

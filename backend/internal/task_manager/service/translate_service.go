@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	pbt "github.com/oOSomnus/transflate/api/generated/translate"
-	"github.com/oOSomnus/transflate/pkg/utils"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
@@ -20,10 +20,10 @@ var (
 func getTransGrpcConn() (*grpc.ClientConn, error) {
 	transGrpcOnce.Do(
 		func() {
-			utils.LoadEnv()
-			grpcServiceName := utils.GetEnv("TRANSLATE_CONTAINER_NAME")
+			//utils.LoadEnv()
+			grpcServiceHost := viper.GetString("translate.host")
 			transGrpcConn, transGrpcErr = grpc.NewClient(
-				grpcServiceName+":50052", grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpcServiceHost+":50052", grpc.WithTransportCredentials(insecure.NewCredentials()),
 			)
 			if transGrpcErr != nil {
 				log.Printf("TransGrpcErr: %v", transGrpcErr)

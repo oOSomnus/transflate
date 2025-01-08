@@ -7,6 +7,8 @@ import (
 )
 
 /*
+Deprecated: Switch to viper config
+
 LoadEnv loads environment variables from a .env file into the application.
 
 Behavior:
@@ -27,6 +29,8 @@ func LoadEnv() {
 }
 
 /*
+Deprecated: Use viper.GetString instead
+
 GetEnv retrieves the value of an environment variable by its key.
 
 Parameters:

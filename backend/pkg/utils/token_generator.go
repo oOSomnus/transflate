@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/spf13/viper"
 	"time"
 )
 
@@ -16,8 +17,8 @@ Returns:
   - (error): An error if the token signing process fails.
 */
 func GenerateToken(username string) (string, error) {
-	LoadEnv()
-	var jwtSecret = []byte(GetEnv("JWT_SECRET"))
+	//LoadEnv()
+	var jwtSecret = []byte(viper.GetString("jwt.secret"))
 	// Token created
 	claims := jwt.MapClaims{
 		"username": username,

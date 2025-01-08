@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/oOSomnus/transflate/pkg/utils"
+	"github.com/spf13/viper"
 	"sync"
 	"time"
 
@@ -20,10 +20,10 @@ var (
 func getOcrGRPCConn() (*grpc.ClientConn, error) {
 	grpcConnOnce.Do(
 		func() {
-			utils.LoadEnv()
-			grpcServiceName := utils.GetEnv("OCR_CONTAINER_NAME")
+			//utils.LoadEnv()
+			grpcServiceHost := viper.GetString("ocr.host")
 			grpcConn, grpcConnErr = grpc.NewClient(
-				grpcServiceName+":50051", grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpcServiceHost+":50051", grpc.WithTransportCredentials(insecure.NewCredentials()),
 			)
 		},
 	)

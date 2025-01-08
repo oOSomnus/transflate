@@ -25,8 +25,9 @@ RUN apk add --no-cache bash curl
 
 # copy compiled bin
 COPY --from=builder /app/task_manager /app/task_manager
-COPY .env /app/.env
-
+#COPY .env /app/.env
+COPY config.local.yaml /app/config.local.yaml
+COPY config.production.yaml /app/config.production.yaml
 # expose
 EXPOSE 8080
 
