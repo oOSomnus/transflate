@@ -40,7 +40,7 @@ func main() {
 	}
 
 	r := gin.Default()
-	err := r.SetTrustedProxies([]string{"172.18.0.0/16", "localhost"})
+	err := r.SetTrustedProxies([]string{"172.18.0.0/16", "127.0.0.1"})
 	if err != nil {
 		log.Fatalf("Error setting trusted proxies: %v", err)
 	}
