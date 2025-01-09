@@ -45,7 +45,11 @@ jobs:
             echo "${{ secrets.SSL_PEM }}" | base64 -d > ./frontend/certs/translaterequest.com.pem
             echo "${{ secrets.PROD_CONFIG }}" | base64 -d > ./backend/config.production.yaml
             echo "${{ secrets.ENV }}" | base64 -d > ./.env
-
+            
+            echo "Ensuring docker permissions..."
+            sudo usermod -aG docker $USER          
+            newgrp docker
+          
             echo "Building and starting services..."
             docker compose build task_manager
             docker compose build ocr_service
