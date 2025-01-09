@@ -34,6 +34,9 @@ jobs:
             echo "Starting deployment process..."
 
             cd ~/transflate
+            echo "Cleaning up local repository..."
+            git reset --hard HEAD
+            git clean -fd
             echo "Pulling latest changes from main branch..."
             git pull origin main
 
