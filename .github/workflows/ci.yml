@@ -1,0 +1,49 @@
+name: Deployment
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_PEM_KEY }}" | base64 -d > ~/.ssh/ec2_key.pem
+          chmod 600 ~/.ssh/ec2_key.pem
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem $USER@$HOST << 'EOF'
+            set -e
+            echo "Starting deployment process..."
+
+            cd ~/transflate
+            echo "Pulling latest changes from main branch..."
+            git pull origin main
+
+            mkdir -p ./transflate/frontend/certs
+            echo "${{ secrets.SSL_KEY }}" | base64 -d > ./transflate/frontend/certs/translaterequest.com.key
+            echo "${{ secrets.SSL_PEM }}" | base64 -d > ./transflate/frontend/certs/translaterequest.com.pem
+            echo "${{ secrets.PROD_CONFIG }}" | base64 -d > ./transflate/backend/config.production.yaml
+            echo "${{ secrets.ENV }}" | base64 -d > ./transflate/.env
+
+            echo "Building and starting services..."
+            docker compose build task_manager
+            docker compose build ocr_service
+            docker compose build translate_service
+            docker compose build frontend
+            docker compose up -d || { echo "Docker compose failed"; exit 1; }
+          EOF
+          rm ~/.ssh/ec2_key.pem
