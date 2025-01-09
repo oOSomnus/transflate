@@ -13,6 +13,10 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
 
+    env:
+      USER: ${{ secrets.EC2_USER }}
+      HOST: ${{ secrets.EC2_HOST }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
