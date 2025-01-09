@@ -59,6 +59,6 @@ jobs:
             docker compose build ocr_service
             docker compose build translate_service
             docker compose build frontend
-            docker compose up -d || { echo "Docker compose failed"; exit 1; }
+            docker compose up -d --force-recreate || { echo "Docker compose failed"; exit 1; }
           EOF
           rm ~/.ssh/ec2_key.pem
