@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api';
 import { saveToken } from '../utils';
@@ -6,46 +6,69 @@ import { saveToken } from '../utils';
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [turnstileToken, setTurnstileToken] = useState('');
     const navigate = useNavigate();
+
+    window.handleTurnstileCallback = (token) => {
+        console.log('Turnstile token:', token); // 调试用
+        setTurnstileToken(token);
+    };
+
+    useEffect(() => {
+        if (window.turnstile) {
+            const instance = window.turnstile.render('.cf-turnstile');
+            return () => {
+                if (instance) {
+                    window.turnstile.remove(instance);
+                }
+            };
+        }
+    }, []);
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!turnstileToken) {
+            alert('Please complete the Turnstile verification.');
+            return;
+        }
         try {
-            const { data } = await login(username, password);
+            const { data } = await login(username, password, turnstileToken);
             saveToken(data.token);
             navigate(0);
         } catch (error) {
-            alert('登录失败');
+            alert('Login failed');
         }
-    };
-
-    const handleRegisterRedirect = () => {
-        navigate('/register');
     };
 
     return (
         <div>
             <form onSubmit={handleSubmit}>
-                <h2>登录</h2>
+                <h2>Sign In</h2>
                 <input
                     type="text"
-                    placeholder="用户名"
+                    placeholder="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
                 />
                 <input
                     type="password"
-                    placeholder="密码"
+                    placeholder="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                 />
-                <button type="submit">登录</button>
+                <div
+                    className="cf-turnstile"
+                    data-sitekey="0x4AAAAAAA4m5v6QQl0Eov1I"
+                    data-callback="handleTurnstileCallback"
+                ></div>
+                <button type="submit">Sign In</button>
             </form>
             <div style={{ marginTop: '10px' }}>
-                <p>还没有账号？</p>
-                <button onClick={handleRegisterRedirect}>去注册</button>
+                <p>No account yet?</p>
+                <button onClick={() => navigate('/register')}>Register</button>
             </div>
         </div>
     );
