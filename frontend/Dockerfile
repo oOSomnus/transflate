@@ -3,7 +3,7 @@ FROM node:18 as build
 
 # Set the working directory
 WORKDIR /app
-
+ENV REACT_APP_TRANSFLATE_BACKEND_BASEURL /api
 # Copy package.json and package-lock.json to install dependencies
 COPY package*.json ./
 

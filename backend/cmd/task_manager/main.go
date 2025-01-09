@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("Error reading config file: %v", err)
 	}
 
-	gin.SetMode(gin.DebugMode)
+	gin.SetMode(viper.GetString("gin.mode"))
 	config.ConnectDB()
 
 	if config.DB == nil {
@@ -40,7 +40,10 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.SetTrustedProxies([]string{"172.18.0.0/16", "localhost"})
+	err := r.SetTrustedProxies([]string{"172.18.0.0/16", "localhost"})
+	if err != nil {
+		log.Fatalf("Error setting trusted proxies: %v", err)
+	}
 	r.Use(
 		cors.New(
 			cors.Config{
@@ -81,7 +84,7 @@ func main() {
 		}
 	}()
 
-	err := r.Run(port)
+	err = r.Run(port)
 	if err != nil {
 		log.Fatal(err)
 	}

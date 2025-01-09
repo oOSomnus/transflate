@@ -48,9 +48,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    environment:
-      TRANSFLATE_BACKEND_HOST: task_manager
-      TRANSFLATE_BACKEND_BASEURL: /api
     ports:
       - "80:80"
       - "443:443"

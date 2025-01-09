@@ -2,7 +2,7 @@ import axios from 'axios';
 import {getToken} from "./utils";
 
 const API = axios.create({
-    baseURL: process.env.TRANSFLATE_BACKEND_BASEURL || "http://localhost:8080",
+    baseURL: process.env.REACT_APP_TRANSFLATE_BACKEND_BASEURL || "/api"
 });
 
 API.interceptors.request.use((config) => {

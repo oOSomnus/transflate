@@ -64,15 +64,23 @@ func TaskSubmit(c *gin.Context) {
 	}
 	//check whether it's pdf
 	if filepath.Ext(file.Filename) != ".pdf" {
+		log.Println("File extension not pdf")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Only PDF files are allowed"})
 		return
 	}
 	// Open the uploaded file
 	fileContent, err := utils.OpenFile(file)
+	if err != nil {
+		log.Printf("Error opening file: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse file"})
+	}
 	lang := c.DefaultPostForm("lang", "eng")
 
 	transResponse, err := usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
-
+	if err != nil {
+		log.Printf("Error processing OCR: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to process OCR"})
+	}
 	//log.Printf("transresponse: %s", transResponse)
 
 	downLink, err := CreateDownloadLinkWithMdString(transResponse)
