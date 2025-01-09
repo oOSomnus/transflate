@@ -2,7 +2,7 @@ import axios from 'axios';
 import {getToken} from "./utils";
 
 const API = axios.create({
-    baseURL: "/api",
+    baseURL: process.env.TRANSFLATE_BACKEND_BASEURL || "http://localhost:8080",
 });
 
 API.interceptors.request.use((config) => {
@@ -13,10 +13,15 @@ API.interceptors.request.use((config) => {
     return config;
 });
 
-export const login = (username, password) =>
-    API.post('/login', JSON.stringify({ username, password }), {
-        headers: { 'Content-Type': 'application/json' },
-    });
+export const login = (username, password, turnstileToken) =>
+    API.post(
+        '/login',
+        JSON.stringify({ username, password,'cf-turnstile-response':  turnstileToken }),
+        {
+            headers: { 'Content-Type': 'application/json' },
+        }
+    );
+
 
 export const register = (username, password) =>
     API.post('/register', JSON.stringify({ username, password }), {

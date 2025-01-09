@@ -26,6 +26,15 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// Verify turnstile
+	turnstileToken := req.TurnstileToken
+	if turnstileToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid request"})
+		return
+	}
+	if err := utils.VerifyTurnstileToken(turnstileToken); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Turnstile token verification failed"})
+	}
 	isAuthenticated, err := usecase.Authenticate(req.Username, req.Password)
 	if !isAuthenticated {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})

@@ -11,10 +11,10 @@ const Register = () => {
         e.preventDefault();
         try {
             await register(username, password);
-            alert('注册成功，请登录');
+            alert('Register successfully!');
             navigate('/login');
         } catch (error) {
-            alert('注册失败');
+            alert('Register failed!');
         }
     };
     const handleLoginRedirect = () => {
@@ -22,16 +22,16 @@ const Register = () => {
     };
     return (<div>
     <form onSubmit={handleSubmit}>
-        <h2>注册</h2>
-        <input type="text" placeholder="用户名" value={username} onChange={(e) => setUsername(e.target.value)}
+        <h2>Register</h2>
+        <input type="text" placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)}
                required/>
-        <input type="password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)}
+        <input type="password" placeholder="password" value={password} onChange={(e) => setPassword(e.target.value)}
                required/>
-        <button type="submit">注册</button>
+        <button type="submit">Register</button>
     </form>
     <div style={{marginTop: '10px'}}>
-        <p>已有账号？</p>
-        <button onClick={handleLoginRedirect}>去登录</button>
+        <p>Already registered?</p>
+        <button onClick={handleLoginRedirect}>Sign in</button>
     </div>
         </div>
 );
