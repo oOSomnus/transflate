@@ -48,7 +48,11 @@ jobs:
             
             echo "Ensuring docker permissions..."
             sudo usermod -aG docker $USER          
-            newgrp docker
+            
+            echo "Cleaning up Docker resources..."
+            docker network prune -f
+            docker volume prune -f
+          
           
             echo "Building and starting services..."
             docker compose build task_manager
