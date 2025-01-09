@@ -40,11 +40,11 @@ jobs:
             echo "Pulling latest changes from main branch..."
             git pull origin main
 
-            mkdir -p ./transflate/frontend/certs
-            echo "${{ secrets.SSL_KEY }}" | base64 -d > ./transflate/frontend/certs/translaterequest.com.key
-            echo "${{ secrets.SSL_PEM }}" | base64 -d > ./transflate/frontend/certs/translaterequest.com.pem
-            echo "${{ secrets.PROD_CONFIG }}" | base64 -d > ./transflate/backend/config.production.yaml
-            echo "${{ secrets.ENV }}" | base64 -d > ./transflate/.env
+            mkdir -p ./frontend/certs
+            echo "${{ secrets.SSL_KEY }}" | base64 -d > ./frontend/certs/translaterequest.com.key
+            echo "${{ secrets.SSL_PEM }}" | base64 -d > ./frontend/certs/translaterequest.com.pem
+            echo "${{ secrets.PROD_CONFIG }}" | base64 -d > ./backend/config.production.yaml
+            echo "${{ secrets.ENV }}" | base64 -d > ./.env
 
             echo "Building and starting services..."
             docker compose build task_manager
