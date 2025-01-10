@@ -2,17 +2,6 @@
 
 A comprehensive platform integrating OCR and translation services, supporting multi-language text recognition and translation.
 
-## Directory Structure
-
-- **backend**: Backend services, including implementations of OCR and translation functionalities.
-    - `api`: Defines and generates gRPC service interfaces.
-    - `cmd`: Entry points for the services.
-    - `engine`: Includes OCR-related data and the Tesseract OCR engine.
-    - `internal`: Core business logic and service implementations.
-    - `pkg`: Shared utilities and middleware.
-    - `bin`: Scripts for Docker builds and proto file generation.
-
-- **frontend**: Frontend service, featuring a React-based interface and Nginx configuration.
 ## Quick Start
 
 ### Prerequisites
@@ -29,42 +18,12 @@ A comprehensive platform integrating OCR and translation services, supporting mu
    cd transflate
    ```
 
-2. Adjust nginx and environmental variables configuration for your own environment.
+2. Adjust nginx and viper configuration for your own environment.
 
 3. Start all services:
    ```bash
    docker-compose up -d
    ```
-
-### Local Development
-
-#### Backend Development
-
-1. Generate gRPC code:
-   ```bash
-   cd backend
-   make proto
-   ```
-
-2. Build the backend services:
-   ```bash
-   cd backend
-   make build
-   ```
-
-#### Frontend Development
-
-1. Install dependencies:
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-2. Start the development server:
-   ```bash
-   npm start
-   ```
-
 ## Features
 
 - **OCR Service**: Provides text recognition capabilities supporting multiple languages (e.g., English, French, Russian).
