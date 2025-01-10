@@ -35,11 +35,17 @@ const Translate = () => {
             const { data } = await uploadPDF(formData);
             setDownloadLink(data.data);
         } catch (error) {
-            if (error.response?.status === 401) {
-                alert('Unauthorized, please sign in');
-                navigate('/login');
+            if (error.response) {
+                if (error.response.status === 401) {
+                    alert('Unauthorized, please sign in');
+                    navigate('/login');
+                } else if (error.response.data && error.response.data.error) {
+                    alert(`Upload failed: ${error.response.data.error}`);
+                } else {
+                    alert('Upload failed: An unknown error occurred.');
+                }
             } else {
-                alert('Upload failed, please try again later');
+                alert('Upload failed: Unable to connect to the server.');
             }
         } finally {
             setIsLoading(false);

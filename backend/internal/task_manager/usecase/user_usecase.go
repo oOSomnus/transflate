@@ -62,7 +62,7 @@ func CreateUser(username string, password string) error {
 		return fmt.Errorf("failed to check user existence: %w", err)
 	}
 	if exists {
-		return errors.New("user with this username already exists")
+		return errors.New("user already exists")
 	}
 
 	// Hash the password

@@ -37,7 +37,11 @@ const Login = () => {
             saveToken(data.token);
             navigate(0);
         } catch (error) {
-            alert('Login failed');
+            if (error.response && error.response.data && error.response.data.error) {
+                alert(`Login failed: ${error.response.data.error}`);
+            } else {
+                alert('Login failed: An unknown error occurred.');
+            }
         }
     };
 
