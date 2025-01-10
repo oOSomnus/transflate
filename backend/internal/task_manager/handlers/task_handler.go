@@ -40,7 +40,7 @@ func TaskSubmit(c *gin.Context) {
 	if !ok {
 		c.JSON(
 			http.StatusInternalServerError, gin.H{
-				"error": "Invalid username type",
+				"error": "Invalid username",
 			},
 		)
 		return
@@ -57,7 +57,7 @@ func TaskSubmit(c *gin.Context) {
 	if err != nil {
 		c.JSON(
 			http.StatusBadRequest, gin.H{
-				"error": "document invalid",
+				"error": "Document invalid",
 			},
 		)
 		return

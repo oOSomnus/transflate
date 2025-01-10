@@ -75,7 +75,7 @@ func Register(c *gin.Context) {
 	}
 	err := usecase.CreateUser(req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		log.Println("Error: Failed to create user")
 		return
 	}

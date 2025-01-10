@@ -14,7 +14,11 @@ const Register = () => {
             alert('Register successfully!');
             navigate('/login');
         } catch (error) {
-            alert('Register failed!');
+            if (error.response && error.response.data && error.response.data.error) {
+                alert(`Register failed: ${error.response.data.error}`);
+            } else {
+                alert('Register failed: An unknown error occurred.');
+            }
         }
     };
     const handleLoginRedirect = () => {
