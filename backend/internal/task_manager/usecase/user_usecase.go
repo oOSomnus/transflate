@@ -8,95 +8,83 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-/*
-Authenticate authenticates a user by comparing the provided password with the stored hashed password.
+// 错误消息常量
+const (
+	ErrInvalidCredentials = "invalid username or password"
+	ErrUserAlreadyExists  = "user already exists"
+	ErrEmptyInput         = "username and password cannot be empty"
+)
 
-Parameters:
-  - username (string): The username of the user to authenticate.
-  - password (string): The plaintext password provided by the user.
-
-Returns:
-  - (bool): True if the user is authenticated successfully, false otherwise.
-  - (error): An error if the user is not found or other issues occur during authentication.
-*/
-
+// Authenticate validates credentials by comparing a provided password to the stored hash.
+// Returns true if valid, otherwise returns false and an error.
 func Authenticate(username, password string) (bool, error) {
-	// Fetch pwd
-	pwdHashFromDB, err := repository.FindUsrWithUsername(username)
+	hashedPassword, err := repository.FindUsrWithUsername(username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return false, errors.New("invalid username or password")
+			return false, errors.New(ErrInvalidCredentials)
 		}
 		return false, fmt.Errorf("failed to retrieve user: %w", err)
 	}
-
-	// Compare
-	if err := bcrypt.CompareHashAndPassword([]byte(pwdHashFromDB), []byte(password)); err != nil {
-		return false, errors.New("invalid username or password")
+	if err := validatePassword(password, hashedPassword); err != nil {
+		return false, err
 	}
-
-	// If match
 	return true, nil
 }
 
-/*
-CreateUser creates a new user with the specified username and password.
-
-Parameters:
-  - username (string): The desired username for the new user.
-  - password (string): The desired password for the new user.
-
-Returns:
-  - (error): An error if the input is invalid, the username already exists, or if any internal process fails.
-*/
-
-func CreateUser(username string, password string) error {
-	// Validate input
-	if username == "" || password == "" {
-		return errors.New("username and password cannot be empty")
+// validatePassword compares the plaintext password with the hashed password.
+// Returns an error if passwords don't match.
+func validatePassword(password, hashedPassword string) error {
+	if bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) != nil {
+		return errors.New(ErrInvalidCredentials)
 	}
+	return nil
+}
 
-	// Check if user exists
-	exists, err := repository.IfUserExists(username)
-	if err != nil {
+// CreateUser creates a new user with a hashed password.
+// Returns an error if the input is invalid, user already exists, or creation fails.
+func CreateUser(username, password string) error {
+	if err := validateUserInput(username, password); err != nil {
+		return err
+	}
+	if exists, err := repository.IfUserExists(username); err != nil {
 		return fmt.Errorf("failed to check user existence: %w", err)
+	} else if exists {
+		return errors.New(ErrUserAlreadyExists)
 	}
-	if exists {
-		return errors.New("user already exists")
-	}
+	return createUserInRepository(username, password)
+}
 
-	// Hash the password
+// validateUserInput ensures username and password are not empty.
+func validateUserInput(username, password string) error {
+	if username == "" || password == "" {
+		return errors.New(ErrEmptyInput)
+	}
+	return nil
+}
+
+// createUserInRepository hashes the password and adds the user to the repository.
+func createUserInRepository(username, password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
-
-	// Create the user
-	if err := repository.CreateUser(username, string(hashedPassword)); err != nil {
+	if err = repository.CreateUser(username, string(hashedPassword)); err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
-
 	return nil
 }
 
-/*
-DecreaseBalance is a wrapper function that calls the primary DecreaseBalance implementation and handles any errors.
-
-Parameters:
-  - username (string): The username of the user whose balance is to be reduced.
-  - balance (int): The amount to be deducted from the user's balance.
-
-Returns:
-  - (error): An error if the underlying DecreaseBalance call fails, wrapped with additional context.
-*/
+// DecreaseBalance decreases the given user's balance.
+// Returns an error if the operation fails.
 func DecreaseBalance(username string, balance int) error {
-	err := repository.DecreaseBalance(username, balance)
-	if err != nil {
+	if err := repository.DecreaseBalance(username, balance); err != nil {
 		return fmt.Errorf("failed to decrease balance: %w", err)
 	}
 	return nil
 }
 
+// CheckBalance retrieves and validates a user's balance.
+// Returns the balance and an error if the retrieval fails.
 func CheckBalance(username string) (int, error) {
 	balance, err := repository.GetBalance(username)
 	if err != nil {

@@ -37,6 +37,10 @@ func CloseOcrGRPCConn() error {
 	return nil
 }
 
+// ProcessOCR processes an OCR request by sending the given file content and language to the OCR service via gRPC.
+// Parameters: fileContent ([]byte) - The content of the file to be processed.
+// lang (string) - The language code for OCR processing.
+// Returns: *pb.StringListResponse containing extracted text data, or an error if the process fails.
 func ProcessOCR(fileContent []byte, lang string) (*pb.StringListResponse, error) {
 	conn, err := getOcrGRPCConn()
 	if err != nil {

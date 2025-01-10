@@ -8,50 +8,43 @@ import (
 	"strings"
 )
 
-/*
-ProcessOCRAndTranslate performs OCR on the given file content, translates the extracted text, and manages user balance.
-
-Parameters:
-  - usernameStr (string): The username of the user for whom the OCR and translation is being performed.
-  - fileContent ([]byte): The content of the file to be processed through OCR.
-  - lang (string): The language code for OCR processing.
-
-Returns:
-  - (string): The translated text from the OCR-processed file.
-  - (error): An error if the OCR processing, text translation, or balance decrement fails.
-*/
-func ProcessOCRAndTranslate(usernameStr string, fileContent []byte, lang string) (string, error) {
+// ProcessOCRAndTranslate processes the OCR on a file, translates the extracted text, and handles user balance decrement.
+// Parameters: usernameStr (string) - The username for balance deduction; fileContent ([]byte) - File data for OCR;
+// lang (string) - The target OCR language.
+// Returns: Translated text (string) or an error if the process fails.
+// ProcessOCRAndTranslate processes the OCR on a file, translates the extracted text, and handles user balance decrement.
+func ProcessOCRAndTranslate(username string, fileContent []byte, lang string) (string, error) {
 	ocrResponse, err := service.ProcessOCR(fileContent, lang)
-	if err != nil {
-		log.Println("ocr error")
+	if err != nil || ocrResponse == nil {
+		log.Println("Error during OCR processing:", err)
+		return "", errors.New("failed to process OCR")
+	}
+
+	// Merge and clean OCR response lines
+	cleanedText := mergeAndCleanStrings(ocrResponse.Lines)
+
+	// Decrease user balance based on the number of pages
+	numPages := int(ocrResponse.PageNum)
+	if err = DecreaseBalance(username, numPages); err != nil {
+		log.Printf("Error decreasing balance for user %s: %v", username, err)
 		return "", err
 	}
-	if ocrResponse == nil {
-		log.Println("ocrResponse is nil")
-		return "", errors.New("ocrResponse is nil")
+
+	// Translate the cleaned text
+	translatedResponse, err := service.TranslateText(cleanedText)
+	if err != nil {
+		log.Println("Error during text translation:", err)
+		return "", err
 	}
-	respLines := ocrResponse.Lines
-	log.Println("File processed successfully.")
-	//merge strings
+
+	return translatedResponse.Lines, nil
+}
+
+// mergeAndCleanStrings merges multiple strings into one and applies text cleaning.
+func mergeAndCleanStrings(lines []string) string {
 	var builder strings.Builder
-	for _, line := range respLines {
+	for _, line := range lines {
 		builder.WriteString(line)
 	}
-	mergedString := builder.String()
-	mergedString = utils.TextCleaning(mergedString)
-	//decrease balance
-	numPages := int(ocrResponse.PageNum)
-	err = DecreaseBalance(usernameStr, numPages)
-	if err != nil {
-		log.Println("Error decreasing balance.")
-		return "", err
-	}
-	log.Printf("Username: %s", usernameStr)
-	//translate
-	transResponse, err := service.TranslateText(mergedString)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	return transResponse.Lines, nil
+	return utils.TextCleaning(builder.String())
 }

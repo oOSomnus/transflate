@@ -10,16 +10,8 @@ import (
 	"time"
 )
 
-/*
-FindUsrWithUsername retrieves the hashed password for a user with the given username.
-
-Parameters:
-  - username (string): The username of the user whose password is being retrieved.
-
-Returns:
-  - (string): The hashed password associated with the given username.
-  - (error): An error if the user is not found or any database issues occur.
-*/
+// FindUsrWithUsername retrieves the password hash associated with a given username from the database.
+// Returns the password hash or an error if the user does not exist or a query error occurs.
 func FindUsrWithUsername(username string) (string, error) {
 	query := "SELECT password FROM users WHERE username = $1"
 	row := config.DB.QueryRow(query, username)
@@ -34,16 +26,9 @@ func FindUsrWithUsername(username string) (string, error) {
 	return pwd, nil
 }
 
-/*
-IfUserExists checks if a user with the given username exists in the database.
-
-Parameters:
-  - username (string): The username of the user to check.
-
-Returns:
-  - (bool): True if the user exists, false otherwise.
-  - (error): An error if there are database-related issues.
-*/
+// IfUserExists checks if a user exists in the database based on the provided username.
+// Returns true and nil if the user exists, false and nil if the user does not exist,
+// or false and an error if any database error occurs.
 func IfUserExists(username string) (bool, error) {
 	query := "SELECT userid FROM users WHERE username = $1"
 	row := config.DB.QueryRow(query, username)
@@ -58,16 +43,8 @@ func IfUserExists(username string) (bool, error) {
 	return true, nil
 }
 
-/*
-CreateUser creates a new user by inserting their username and hashed password into the database.
-
-Parameters:
-  - username (string): The username of the new user to be created.
-  - password (string): The hashed password of the user to be stored.
-
-Returns:
-  - (error): Returns an error if the insertion into the database fails, or nil if the operation is successful.
-*/
+// CreateUser inserts a new user into the database with the specified username and password.
+// Returns an error if the database operation fails.
 func CreateUser(username string, password string) error {
 	query := "INSERT INTO users (username, password) VALUES ($1, $2)"
 	_, err := config.DB.Exec(query, username, password)
@@ -77,21 +54,12 @@ func CreateUser(username string, password string) error {
 	return nil
 }
 
-/*
-DecreaseBalance reduces the balance of a user in the database by a specified amount.
-
-Parameters:
-  - username (string): The username of the user whose balance is to be reduced.
-  - balance (int): The amount to be deducted from the user's balance. Must be greater than zero.
-
-Returns:
-  - (error): An error if any of the following occur:
-  - The balance parameter is invalid (less than or equal to zero).
-  - A transaction cannot be initiated.
-  - The user is not found in the database.
-  - The user has insufficient balance.
-  - There is an error executing the database query to update the balance.
-*/
+// DecreaseBalance decreases the user's balance by the specified amount, ensuring atomicity and handling possible errors.
+// Parameters:
+// - username (string): The username of the user whose balance is to be reduced.
+// - balance (int): The amount to be deducted from the user's balance.
+// Returns:
+// - error: An error if the operation fails due to invalid input, insufficient balance, or database operation issues.
 func DecreaseBalance(username string, balance int) error {
 	if balance <= 0 {
 		return errors.New("invalid amount")
@@ -138,6 +106,8 @@ func DecreaseBalance(username string, balance int) error {
 	return nil
 }
 
+// GetBalance retrieves the account balance for the specified username from the database.
+// Returns the balance as an integer and an error if the query fails or the user is not found.
 func GetBalance(username string) (int, error) {
 	query := "SELECT balance FROM users WHERE username = $1"
 	row := config.DB.QueryRow(query, username)

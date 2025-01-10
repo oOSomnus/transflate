@@ -41,6 +41,7 @@ func CloseTransGrpcConn() error {
 	return nil
 }
 
+// TranslateText translates the given text by sending a gRPC request to the translation service and returns the result.
 func TranslateText(text string) (*pbt.TranslateResult, error) {
 	conn, err := getTransGrpcConn()
 	if err != nil {

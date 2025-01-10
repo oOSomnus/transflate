@@ -1,84 +1,83 @@
 package handlers
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/internal/task_manager/domain"
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
-	"log"
-	"net/http"
 )
 
-/*
-Login handles user login by authenticating credentials and generating a JWT token.
+const (
+	errInvalidRequest     = "Invalid request"
+	errTurnstileFailure   = "Turnstile token verification failed"
+	errAuthFailure        = "Failed to authenticate, please check the user information"
+	errTokenGeneration    = "Failed to generate token"
+	errUserUnauthorized   = "User unauthorized"
+	errInvalidUsername    = "Invalid username"
+	errBalanceCheckFailed = "Error checking balance"
+)
 
-Parameters:
-  - c (*gin.Context): The Gin context containing the HTTP request and response objects.
+// bindJSONAndValidate is a helper function to bind and validate JSON request payloads.
+func bindJSONAndValidate(c *gin.Context, req interface{}) bool {
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errInvalidRequest})
+		return false
+	}
+	return true
+}
 
-Returns:
-  - Responds directly to the HTTP client with appropriate status codes and messages based on the operation's success or failure.
-*/
-
+// Login handles user authentication by validating credentials, verifying Turnstile token, and returning a JWT token.
 func Login(c *gin.Context) {
-	var req domain.UserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+	var userRequest domain.UserRequest
+
+	if !bindJSONAndValidate(c, &userRequest) {
 		return
 	}
 
-	// Verify turnstile
-	turnstileToken := req.TurnstileToken
-	if turnstileToken == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid request"})
-		return
-	}
-	if err := utils.VerifyTurnstileToken(turnstileToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Turnstile token verification failed"})
-	}
-	isAuthenticated, err := usecase.Authenticate(req.Username, req.Password)
-	if !isAuthenticated {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	if err := utils.VerifyTurnstileToken(userRequest.TurnstileToken); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": errTurnstileFailure})
 		return
 	}
 
-	// Generate JWT Token
-	token, err := utils.GenerateToken(req.Username)
+	isAuthenticated, err := usecase.Authenticate(userRequest.Username, userRequest.Password)
+	if err != nil || !isAuthenticated {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": errAuthFailure})
+		return
+	}
+
+	token, err := utils.GenerateToken(userRequest.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errTokenGeneration})
 		return
 	}
 
 	c.JSON(
 		http.StatusOK, gin.H{
 			"message":  "Login successful",
-			"username": req.Username,
+			"username": userRequest.Username,
 			"token":    token,
 		},
 	)
 }
 
-/*
-Register handles the HTTP request to register a new user.
-
-Parameters:
-  - c (*gin.Context): The context of the current HTTP request, providing request and response handling.
-
-Returns:
-  - (JSON): A success or error message depending on the outcome.
-*/
+// Register handles user registration by processing the incoming JSON request, validating input, and creating a new user.
 func Register(c *gin.Context) {
-	var req domain.UserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		log.Println("Error: Invalid request")
+	var userRequest domain.UserRequest
+
+	if !bindJSONAndValidate(c, &userRequest) {
+		log.Println("Error: Invalid registration request")
 		return
 	}
-	err := usecase.CreateUser(req.Username, req.Password)
-	if err != nil {
+
+	if err := usecase.CreateUser(userRequest.Username, userRequest.Password); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-		log.Println("Error: Failed to create user")
+		log.Printf("Error: Failed to create user for username %s: %v", userRequest.Username, err)
 		return
 	}
+
 	c.JSON(
 		http.StatusOK, gin.H{
 			"message": "User created successfully",
@@ -86,24 +85,27 @@ func Register(c *gin.Context) {
 	)
 }
 
+// Info handles retrieving user information, including username and balance, and returns JSON responses based on the outcome.
 func Info(c *gin.Context) {
-	log.Println("Getting user info ...")
 	username, exists := c.Get("username")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": errUserUnauthorized})
+		return
 	}
+
 	usernameStr, ok := username.(string)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": errInvalidUsername})
+		return
 	}
+
 	balance, err := usecase.CheckBalance(usernameStr)
 	if err != nil {
-		c.JSON(
-			http.StatusBadRequest, gin.H{
-				"error": "Error checking balance",
-			},
-		)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errBalanceCheckFailed})
+		log.Printf("Error: Failed to check balance for username %s: %v", usernameStr, err)
+		return
 	}
+
 	c.JSON(
 		http.StatusOK, gin.H{
 			"username": usernameStr,

@@ -21,6 +21,7 @@ func init() {
 	log.SetPrefix("[OCR Service] ")
 }
 
+// extractPageNumber extracts the first numeric sequence found in a filename and returns it as an integer. Returns -1 if no number is found or conversion fails.
 func extractPageNumber(filename string) int {
 	re := regexp.MustCompile(`\d+`)
 	match := re.FindString(filename)
@@ -44,17 +45,9 @@ type OCRServiceServer struct {
 	pb.UnimplementedOCRServiceServer
 }
 
-/*
-ProcessPDF processes a PDF file, converts its pages to images using pdftoppm, and performs OCR on each page to extract text.
-
-Parameters:
-  - ctx (context.Context): The context for managing request-scoped values, deadlines, and cancellation signals.
-  - req (*pb.PDFRequest): The request containing the PDF data to be processed, provided as a byte array in `PdfData`.
-
-Returns:
-  - (*pb.StringListResponse): A response containing a list of strings where each string represents the OCR result for a corresponding page of the PDF.
-  - (error): An error if any issues occur during processing, such as file creation, image conversion, or OCR execution.
-*/
+// ProcessPDF handles the processing of a PDF file into text using OCR.
+// It converts the PDF into images and performs OCR on each page concurrently.
+// Returns a StringListResponse containing the extracted text and the total page count.
 func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (*pb.StringListResponse, error) {
 	// Create temp folder
 	log.Println("Received PDF Process request")

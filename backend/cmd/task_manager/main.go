@@ -19,74 +19,102 @@ func init() {
 	log.SetPrefix("[Task Manager Service] ")
 }
 
+const (
+	defaultPort         = ":8080"
+	defaultEnvironment  = "local"
+	configType          = "yaml"
+	ginModeConfigKey    = "gin.mode"
+	corsAllowOriginKey  = "cors.allow-origin"
+	jwtSecretConfigKey  = "jwt.secret"
+	trustedProxiesCIDR1 = "172.18.0.0/16"
+	trustedProxiesCIDR2 = "127.0.0.1"
+)
+
 func main() {
-	// viper config
-	env := os.Getenv("TRANSFLATE_ENV")
-	if env == "" {
-		env = "local"
+	initializeConfig()
+	initializeServerDependencies()
+
+	r := gin.Default()
+	setupTrustedProxies(r)
+	setupCORS(r)
+
+	registerRoutes(r)
+
+	log.Printf("Starting server on %s", defaultPort)
+	deferResourceCleanup()
+	if err := r.Run(defaultPort); err != nil {
+		log.Fatal(err)
 	}
-	viper.SetConfigName(fmt.Sprintf("config.%s", env))
-	viper.SetConfigType("yaml")
+}
+
+func initializeConfig() {
+	environment := os.Getenv("TRANSFLATE_ENV")
+	if environment == "" {
+		environment = defaultEnvironment
+	}
+	viper.SetConfigName(fmt.Sprintf("config.%s", environment))
+	viper.SetConfigType(configType)
 	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config file: %v", err)
 	}
+}
 
-	gin.SetMode(viper.GetString("gin.mode"))
+func initializeServerDependencies() {
+	gin.SetMode(viper.GetString(ginModeConfigKey))
 	config.ConnectDB()
-
 	if config.DB == nil {
 		log.Fatal("Database connection failed")
 	}
+}
 
-	r := gin.Default()
-	err := r.SetTrustedProxies([]string{"172.18.0.0/16", "127.0.0.1"})
-	if err != nil {
+func setupTrustedProxies(r *gin.Engine) {
+	trustedProxies := []string{trustedProxiesCIDR1, trustedProxiesCIDR2}
+	if err := r.SetTrustedProxies(trustedProxies); err != nil {
 		log.Fatalf("Error setting trusted proxies: %v", err)
 	}
+}
+
+func setupCORS(r *gin.Engine) {
+	allowOrigin := viper.GetString(corsAllowOriginKey)
 	r.Use(
 		cors.New(
 			cors.Config{
-				AllowOrigins:     []string{viper.GetString("cors.allow-origin")},
+				AllowOrigins:     []string{allowOrigin},
 				AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 				AllowHeaders:     []string{"Content-Type", "Authorization"},
 				AllowCredentials: true,
 			},
 		),
 	)
-	log.Printf("cors setting: %s", viper.GetString("cors.allow-origin"))
+	log.Printf("CORS setting: %s", allowOrigin)
+}
+
+func registerRoutes(r *gin.Engine) {
 	r.POST("/login", handlers.Login)
 	r.POST("/register", handlers.Register)
+
 	auth := r.Group("/")
 	auth.Use(middleware.AuthMiddleware())
 	auth.POST("/submit", handlers.TaskSubmit)
 	auth.GET("/user/info", handlers.Info)
-	port := ":8080"
-	log.Printf("Starting server on %s", port)
-	defer func(DB *sql.DB) {
-		err := DB.Close()
-		if err != nil {
+}
+
+func deferResourceCleanup() {
+	defer func(db *sql.DB) {
+		if err := db.Close(); err != nil {
 			log.Fatal(err)
 		}
 	}(config.DB)
 
 	defer func() {
-		err := service.CloseOcrGRPCConn()
-		if err != nil {
+		if err := service.CloseOcrGRPCConn(); err != nil {
 			log.Println(err)
 		}
 	}()
-
 	defer func() {
-		err := service.CloseTransGrpcConn()
-		if err != nil {
+		if err := service.CloseTransGrpcConn(); err != nil {
 			log.Println(err)
 		}
 	}()
-
-	err = r.Run(port)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 }
