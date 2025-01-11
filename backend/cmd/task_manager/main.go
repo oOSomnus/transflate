@@ -110,7 +110,7 @@ func initializeServer(db *sql.DB, redisClient *config.RedisClient) *gin.Engine {
 
 // initializeServices initializes and returns instances of S3StorageServiceImpl, OCRService, and TranslateServiceImpl.
 // It logs and exits the application if any of the services fail to initialize.
-func initializeServices() (*service.S3StorageServiceImpl, *service.OCRService, *service.TranslateServiceImpl) {
+func initializeServices() (service.S3StorageService, service.OCRClient, service.TranslateService) {
 	s3Service, err := service.NewS3StorageService()
 	if err != nil {
 		log.Fatalf("S3 service initialization failed: %v", err)
@@ -127,7 +127,7 @@ func initializeServices() (*service.S3StorageServiceImpl, *service.OCRService, *
 }
 
 // cleanupServiceResources ensures the proper closure of resources for OCR and Translate services to release gRPC connections.
-func cleanupServiceResources(ocrService *service.OCRService, translateService *service.TranslateServiceImpl) {
+func cleanupServiceResources(ocrService service.OCRClient, translateService service.TranslateService) {
 	if err := ocrService.Close(); err != nil {
 		log.Println("OCR service close error:", err)
 	}

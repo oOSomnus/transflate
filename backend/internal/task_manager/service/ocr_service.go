@@ -39,7 +39,7 @@ func (s *OCRService) getGRPCConn() (*grpc.ClientConn, error) {
 
 	s.clientConnOnce.Do(
 		func() {
-			s.clientConn, s.clientConnErr = grpc.Dial(
+			s.clientConn, s.clientConnErr = grpc.NewClient(
 				host+":50051",
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
 			)

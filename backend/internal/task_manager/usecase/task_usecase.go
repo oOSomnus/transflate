@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"context"
 	"github.com/oOSomnus/transflate/internal/task_manager/repository"
 	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"github.com/oOSomnus/transflate/pkg/utils"
@@ -28,13 +27,13 @@ type TaskUsecaseImpl struct {
 	tr   repository.TaskRepository
 	ocrc service.OCRClient
 	s3s  service.S3StorageService
-	ts   service.TranslationService
+	ts   service.TranslateService
 }
 
 // NewTaskUsecase creates and initializes a new TaskUsecaseImpl with the provided UserRepository.
 func NewTaskUsecase(
 	ur repository.UserRepository, tr repository.TaskRepository, ocrc service.OCRClient, s3s service.S3StorageService,
-	ts service.TranslationService,
+	ts service.TranslateService,
 ) *TaskUsecaseImpl {
 	return &TaskUsecaseImpl{ur: ur, tr: tr, ocrc: ocrc, s3s: s3s, ts: ts}
 }
@@ -62,7 +61,7 @@ func (t *TaskUsecaseImpl) ProcessOCRAndTranslate(username string, fileContent []
 	}
 
 	// Translate the cleaned text
-	translatedResponse, err := t.ts.TranslateText(context.Background(), cleanedText)
+	translatedResponse, err := t.ts.TranslateText(cleanedText)
 	if err != nil {
 		log.Println("Error during text translation:", err)
 		return "", err

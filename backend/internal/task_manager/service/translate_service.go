@@ -22,7 +22,6 @@ import (
 type TranslateService interface {
 	TranslateText(text string) (*pbt.TranslateResult, error)
 	CloseTransGrpcConn() error
-	getTransGrpcConn() (*grpc.ClientConn, error)
 }
 
 type TranslateServiceImpl struct {
