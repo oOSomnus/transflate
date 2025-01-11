@@ -19,7 +19,7 @@ type RedisClient struct {
 	ctx    context.Context
 }
 
-func NewRedisClient() RedisService {
+func NewRedisClient() *RedisClient {
 	rdb := redis.NewClient(
 		&redis.Options{
 			Addr:     viper.GetString("redis.addr"),

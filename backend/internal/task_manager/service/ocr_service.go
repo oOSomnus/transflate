@@ -2,58 +2,62 @@ package service
 
 import (
 	"context"
-	"github.com/spf13/viper"
-	"sync"
-	"time"
-
+	"fmt"
 	pb "github.com/oOSomnus/transflate/api/generated/ocr"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"sync"
+	"time"
 )
 
-// grpcConn holds the gRPC client connection instance, which is initialized only once.
-// grpcConnOnce ensures that the gRPC client connection is established exactly once.
-// grpcConnErr captures any error that occurs during the initialization of grpcConn.
-var (
-	grpcConn     *grpc.ClientConn
-	grpcConnOnce sync.Once
-	grpcConnErr  error
-)
+// OCRClient is an interface for Optical Character Recognition operations and resource cleanup.
+// ProcessOCR processes the OCR request on given file content with a specified language.
+// Close releases any resources used by the OCRClient.
+type OCRClient interface {
+	ProcessOCR(fileContent []byte, lang string) (*pb.StringListResponse, error)
+	Close() error
+}
 
-// getOcrGRPCConn establishes and returns a gRPC client connection to the OCR service, ensuring it's created only once.
-func getOcrGRPCConn() (*grpc.ClientConn, error) {
-	grpcConnOnce.Do(
+// OCRService is a struct that manages gRPC connections and operations for the OCR service.
+type OCRService struct {
+	clientConn     *grpc.ClientConn
+	clientConnOnce sync.Once
+	clientConnErr  error
+}
+
+// NewOCRService initializes and returns a new instance of OCRService.
+func NewOCRService() *OCRService {
+	return &OCRService{}
+}
+
+func (s *OCRService) getGRPCConn() (*grpc.ClientConn, error) {
+	host := viper.GetString("ocr.host")
+	if host == "" {
+		return nil, fmt.Errorf("OCR service host is not configured")
+	}
+
+	s.clientConnOnce.Do(
 		func() {
-			//utils.LoadEnv()
-			grpcServiceHost := viper.GetString("ocr.host")
-			grpcConn, grpcConnErr = grpc.NewClient(
-				grpcServiceHost+":50051", grpc.WithTransportCredentials(insecure.NewCredentials()),
+			s.clientConn, s.clientConnErr = grpc.Dial(
+				host+":50051",
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
 			)
 		},
 	)
-	return grpcConn, grpcConnErr
+
+	return s.clientConn, s.clientConnErr
 }
 
-// CloseOcrGRPCConn closes the OCR gRPC connection if it exists and returns an error if the closure fails.
-func CloseOcrGRPCConn() error {
-	if grpcConn != nil {
-		return grpcConn.Close()
-	}
-	return nil
-}
-
-// ProcessOCR processes a PDF file's content using OCR with the specified language and returns the extracted text and metadata.
-// Parameters: fileContent ([]byte) - The binary content of the PDF file.
-// lang (string) - The language code for OCR processing.
-// Returns: Extracted text as a StringListResponse and an error if processing fails.
-func ProcessOCR(fileContent []byte, lang string) (*pb.StringListResponse, error) {
-	conn, err := getOcrGRPCConn()
+// ProcessOCR processes the given PDF file content using OCR and specified language, returning a structured response.
+func (s *OCRService) ProcessOCR(fileContent []byte, lang string) (*pb.StringListResponse, error) {
+	conn, err := s.getGRPCConn()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get gRPC connection: %w", err)
 	}
 
 	client := pb.NewOCRServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	return client.ProcessPDF(
@@ -62,4 +66,14 @@ func ProcessOCR(fileContent []byte, lang string) (*pb.StringListResponse, error)
 			Language: lang,
 		},
 	)
+}
+
+// Close releases the underlying gRPC connection if it is active and returns any error encountered during closure.
+func (s *OCRService) Close() error {
+	if s.clientConn != nil {
+		if err := s.clientConn.Close(); err != nil {
+			return fmt.Errorf("failed to close gRPC connection: %w", err)
+		}
+	}
+	return nil
 }

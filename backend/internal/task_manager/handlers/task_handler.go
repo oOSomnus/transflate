@@ -3,16 +3,11 @@ package handlers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
-	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
-	"time"
 )
 
 // init sets logging configuration with timestamp, microseconds precision, and a prefix for task handler logs.
@@ -63,7 +58,7 @@ func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 	}
 
 	// Create download link
-	downLink, err := CreateDownloadLinkWithMdString(transResponse)
+	downLink, err := h.Usecase.CreateDownloadLinkWithMdString(transResponse)
 	if err != nil {
 		log.Printf("Error generating download link: %v", err)
 		handleError(c, http.StatusInternalServerError, "Failed to generate download link")
@@ -110,62 +105,4 @@ func handleFileUpload(c *gin.Context) ([]byte, error) {
 func handleError(c *gin.Context, statusCode int, message string) {
 	log.Println(message)
 	c.JSON(statusCode, gin.H{"error": message})
-}
-
-// s3KeyPrefix defines the prefix used for S3 object keys.
-// tempFilePattern specifies the pattern for temporary file naming.
-// presignedURLExpiry sets the expiration duration for presigned URLs.
-const (
-	s3KeyPrefix        = "mds/"
-	tempFilePattern    = "respMd-*.md"
-	presignedURLExpiry = time.Hour
-)
-
-// CreateDownloadLinkWithMdString generates a presigned S3 download link for a Markdown string by uploading it as a file.
-func CreateDownloadLinkWithMdString(mdString string) (string, error) {
-	bucketName := viper.GetString("s3.bucket.name")
-
-	mdTmpFile, err := createTempFileWithContent(mdString, tempFilePattern)
-	if err != nil {
-		return "", errors.Wrap(err, "error creating temp file with content")
-	}
-	defer func() {
-		err := os.Remove(mdTmpFile.Name())
-		if err != nil {
-			log.Printf("failed to remove temp file: %v", err)
-		}
-	}()
-
-	s3Key := s3KeyPrefix + filepath.Base(mdTmpFile.Name())
-	if err := service.UploadFileToS3(bucketName, s3Key, mdTmpFile.Name(), 1); err != nil {
-		return "", errors.Wrap(err, "failed to upload file to S3")
-	}
-
-	downLink, err := service.GeneratePresignedURL(bucketName, s3Key, presignedURLExpiry)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to generate presigned URL")
-	}
-
-	return downLink, nil
-}
-
-// createTempFileWithContent creates a temporary file with the specified content and pattern, returning the file or an error.
-func createTempFileWithContent(content, pattern string) (*os.File, error) {
-	tempFile, err := os.CreateTemp("", pattern)
-	if err != nil {
-		return nil, errors.Wrap(err, "error creating temp file")
-	}
-
-	// Write content to the file
-	if _, err := tempFile.Write([]byte(content)); err != nil {
-		tempFile.Close()
-		return nil, errors.Wrap(err, "error writing to temp file")
-	}
-
-	// Ensure the file is returned in a closed state
-	if err := tempFile.Close(); err != nil {
-		return nil, errors.Wrap(err, "error closing temp file")
-	}
-
-	return tempFile, nil
 }
