@@ -20,21 +20,29 @@ const (
 	errBalanceCheckFailed = "Error checking balance"
 )
 
+// UserHandler defines methods for handling user-related HTTP requests.
+// Login handles user authentication requests.
+// Register handles user registration requests.
+// Info retrieves information about the authenticated user.
 type UserHandler interface {
 	Login(c *gin.Context)
 	Register(c *gin.Context)
 	Info(c *gin.Context)
 }
 
+// UserHandlerImpl handles HTTP requests related to user operations, delegating logic to the associated UserUsecase.
 type UserHandlerImpl struct {
 	Usecase usecase.UserUsecase
 }
 
+// NewUserHandler initializes and returns a new instance of UserHandlerImpl with the provided UserUsecase.
 func NewUserHandler(u usecase.UserUsecase) *UserHandlerImpl {
 	return &UserHandlerImpl{Usecase: u}
 }
 
-// bindJSONAndValidate is a helper function to bind and validate JSON request payloads.
+// bindJSONAndValidate binds JSON data from the request to a specified struct and validates it.
+// Returns false if binding or validation fails, with a corresponding HTTP 400 response.
+// Returns true if the process succeeds without errors.
 func (h *UserHandlerImpl) bindJSONAndValidate(c *gin.Context, req interface{}) bool {
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": errInvalidRequest})
@@ -43,7 +51,7 @@ func (h *UserHandlerImpl) bindJSONAndValidate(c *gin.Context, req interface{}) b
 	return true
 }
 
-// Login handles user authentication by validating credentials, verifying Turnstile token, and returning a JWT token.
+// Login handles user login requests by validating credentials and generating a JWT token upon successful authentication.
 func (h *UserHandlerImpl) Login(c *gin.Context) {
 	var userRequest domain.UserRequest
 
@@ -77,7 +85,7 @@ func (h *UserHandlerImpl) Login(c *gin.Context) {
 	)
 }
 
-// Register handles user registration by processing the incoming JSON request, validating input, and creating a new user.
+// Register handles the registration of a new user by validating the input and creating a user through the UserUsecase.
 func (h *UserHandlerImpl) Register(c *gin.Context) {
 	var userRequest domain.UserRequest
 
@@ -99,7 +107,7 @@ func (h *UserHandlerImpl) Register(c *gin.Context) {
 	)
 }
 
-// Info handles retrieving user information, including username and balance, and returns JSON responses based on the outcome.
+// Info handles authenticated requests to retrieve user information, including username and account balance.
 func (h *UserHandlerImpl) Info(c *gin.Context) {
 	username, exists := c.Get("username")
 	if !exists {

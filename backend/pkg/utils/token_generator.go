@@ -6,7 +6,8 @@ import (
 	"time"
 )
 
-// GenerateToken generates a JWT token for a given username with a 24-hour expiration time. Returns the token or an error.
+// GenerateToken generates a JWT token for the provided username with a validity of 24 hours.
+// Returns the signed token as a string and an error if token generation fails.
 func GenerateToken(username string) (string, error) {
 	//LoadEnv()
 	var jwtSecret = []byte(viper.GetString("jwt.secret"))

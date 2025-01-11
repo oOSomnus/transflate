@@ -15,27 +15,28 @@ import (
 	"time"
 )
 
+// init sets logging configuration with timestamp, microseconds precision, and a prefix for task handler logs.
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	log.SetPrefix("[Task handler] ")
 }
 
+// TaskHandler defines an interface for handling task-related operations, including task submission through HTTP context.
 type TaskHandler interface {
 	TaskSubmit(c *gin.Context)
 }
 
+// TaskHandlerImpl is a struct that implements task-related HTTP handlers by leveraging the TaskUsecase interface.
 type TaskHandlerImpl struct {
 	Usecase usecase.TaskUsecase
 }
 
+// NewTaskHandler creates and returns a new instance of TaskHandlerImpl with the provided TaskUsecase instance.
 func NewTaskHandler(u usecase.TaskUsecase) *TaskHandlerImpl {
 	return &TaskHandlerImpl{Usecase: u}
 }
 
-// TaskSubmit handles the submission of a task by an authenticated user, processes the uploaded PDF file, and generates a downloadable link.
-// It validates the session, ensures the uploaded file is a PDF, reads its contents, and performs OCR and translation.
-// The result is converted to a markdown-based response and uploaded to generate a presigned download link.
-// Responds with the download link or appropriate error in JSON format.
+// TaskSubmit handles task submission by processing an uploaded file, performing OCR and translation, and returning a download link.
 func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 	log.Println("Processing new task submission...")
 
@@ -72,7 +73,8 @@ func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": downLink})
 }
 
-// getAuthenticatedUsername validates the session and retrieves the username.
+// getAuthenticatedUsername retrieves the username of the authenticated user from the given Gin context.
+// It returns an error if the username is not found or is of an invalid type.
 func getAuthenticatedUsername(c *gin.Context) (string, error) {
 	username, exists := c.Get("username")
 	if !exists {
@@ -85,7 +87,8 @@ func getAuthenticatedUsername(c *gin.Context) (string, error) {
 	return usernameStr, nil
 }
 
-// handleFileUpload validates the uploaded file, ensuring it's a PDF, and returns its content.
+// handleFileUpload processes a file upload from a gin.Context and only accepts PDF files, returning its content as a byte slice.
+// Returns an error if the uploaded file is invalid, not a PDF, or if reading the file content fails.
 func handleFileUpload(c *gin.Context) ([]byte, error) {
 	file, err := c.FormFile("document")
 	if err != nil {
@@ -103,21 +106,22 @@ func handleFileUpload(c *gin.Context) ([]byte, error) {
 	return fileContent, nil
 }
 
-// handleError sends a JSON error response with the given status and message.
+// handleError sends a JSON response with a given HTTP status code and error message, and logs the error message.
 func handleError(c *gin.Context, statusCode int, message string) {
 	log.Println(message)
 	c.JSON(statusCode, gin.H{"error": message})
 }
 
-// CreateDownloadLinkWithMdString generates a downloadable presigned URL from a given markdown string.
-// It writes the input string to a temporary file, uploads the file to S3, and creates a presigned URL for downloading.
+// s3KeyPrefix defines the prefix used for S3 object keys.
+// tempFilePattern specifies the pattern for temporary file naming.
+// presignedURLExpiry sets the expiration duration for presigned URLs.
 const (
 	s3KeyPrefix        = "mds/"
 	tempFilePattern    = "respMd-*.md"
 	presignedURLExpiry = time.Hour
 )
 
-// CreateDownloadLinkWithMdString generates a downloadable presigned URL from a given markdown string.
+// CreateDownloadLinkWithMdString generates a presigned S3 download link for a Markdown string by uploading it as a file.
 func CreateDownloadLinkWithMdString(mdString string) (string, error) {
 	bucketName := viper.GetString("s3.bucket.name")
 
@@ -145,7 +149,7 @@ func CreateDownloadLinkWithMdString(mdString string) (string, error) {
 	return downLink, nil
 }
 
-// createTempFileWithContent creates a temporary file, writes the provided content, and returns the file.
+// createTempFileWithContent creates a temporary file with the specified content and pattern, returning the file or an error.
 func createTempFileWithContent(content, pattern string) (*os.File, error) {
 	tempFile, err := os.CreateTemp("", pattern)
 	if err != nil {

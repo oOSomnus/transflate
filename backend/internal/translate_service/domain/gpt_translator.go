@@ -9,19 +9,13 @@ import (
 	"time"
 )
 
+// GPTTranslator is a struct that provides translation capabilities using OpenAI's API.
+// It wraps a client for interacting with OpenAI's services.
 type GPTTranslator struct {
 	client *openai.Client
 }
 
-/*
-NewGPTTranslator creates a new instance of GPTTranslator.
-
-Parameters:
-  - apiKey (string): The API key used to authenticate with the OpenAI API.
-
-Returns:
-  - (*GPTTranslator): A pointer to the initialized GPTTranslator instance.
-*/
+// NewGPTTranslator initializes and returns a new instance of GPTTranslator with an OpenAI client using the API key from config.
 func NewGPTTranslator() *GPTTranslator {
 	//utils.LoadEnv()
 	apiKey := viper.GetString("openai.api.key")
@@ -32,17 +26,9 @@ func NewGPTTranslator() *GPTTranslator {
 
 }
 
-/*
-Translate performs a translation of the given text into Chinese using the OpenAI API.
-
-Parameters:
-  - prevContext (string): Additional contextual information to assist the translation.
-  - text (string): The English text to be translated.
-
-Returns:
-  - (string): The translated text in markdown format.
-  - (error): An error if the translation process fails or no response is received from the OpenAI API.
-*/
+// Translate uses GPT-4 Turbo to translate an English text input into Chinese, excluding prior context and irrelevant symbols.
+// prevContext provides optional reference data, while text represents the content to translate.
+// Returns the translated text in markdown format or an error if the translation request fails.
 func (g *GPTTranslator) Translate(prevContext, text string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()

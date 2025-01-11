@@ -5,26 +5,13 @@ import (
 	"log"
 )
 
-/*
-GosseractPool is a structure that manages a pool of gosseract.Client instances.
-
-Fields:
-  - pool (chan *gosseract.Client): A buffered channel holding gosseract.Client instances.
-*/
+// GosseractPool represents a pool of reusable gosseract.Client instances for OCR operations.
+// It helps manage the allocation and deallocation of gosseract.Client efficiently.
 type GosseractPool struct {
 	pool chan *gosseract.Client
 }
 
-/*
-NewGosseractPool initializes a new pool of gosseract.Client instances.
-
-Parameters:
-  - size (int): The number of gosseract.Client instances to initialize in the pool.
-  - lang (string): The language to set for the gosseract.Client instances.
-
-Returns:
-  - (*GosseractPool): A pointer to a new GosseractPool containing initialized gosseract.Client instances.
-*/
+// NewGosseractPool initializes a pool of gosseract.Client instances with a specified size and language setting.
 func NewGosseractPool(size int, lang string) *GosseractPool {
 	pool := make(chan *gosseract.Client, size)
 	for i := 0; i < size; i++ {
@@ -38,29 +25,17 @@ func NewGosseractPool(size int, lang string) *GosseractPool {
 	return &GosseractPool{pool: pool}
 }
 
-/*
-Get retrieves a gosseract.Client instance from the pool.
-
-Returns:
-  - (*gosseract.Client): A pointer to a gosseract.Client instance from the pool.
-*/
+// Get retrieves a *gosseract.Client instance from the pool for OCR operations. It blocks if the pool is empty until available.
 func (cp *GosseractPool) Get() *gosseract.Client {
 	return <-cp.pool
 }
 
-/*
-Put returns a gosseract.Client instance back to the pool.
-
-Parameters:
-  - client (*gosseract.Client): The gosseract.Client instance to be returned to the pool.
-*/
+// Put adds a gosseract.Client instance back into the pool for reuse.
 func (cp *GosseractPool) Put(client *gosseract.Client) {
 	cp.pool <- client
 }
 
-/*
-Close closes the GosseractPool and releases all gosseract.Client resources.
-*/
+// Close releases all clients in the pool and shuts down the pool, ensuring proper cleanup of resources.
 func (cp *GosseractPool) Close() {
 	close(cp.pool)
 	for client := range cp.pool {

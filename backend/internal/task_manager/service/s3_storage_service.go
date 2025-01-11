@@ -11,13 +11,7 @@ import (
 	"time"
 )
 
-// UploadFileToS3 uploads a file to an S3 bucket with a specified key and expiration metadata.
-// Parameters:
-// - bucketName: The name of the target S3 bucket.
-// - objectKey: The key for the uploaded object in the S3 bucket.
-// - filePath: The local file path of the file to be uploaded.
-// - expirationDays: The number of days until the file expires, stored as metadata.
-// Returns an error if the upload process fails.
+// UploadFileToS3 uploads a local file to an S3 bucket at the specified key and sets an expiration metadata value.
 func UploadFileToS3(bucketName, objectKey, filePath string, expirationDays int) error {
 	// load default config
 	cfg, err := config.LoadDefaultConfig(
@@ -62,7 +56,7 @@ func UploadFileToS3(bucketName, objectKey, filePath string, expirationDays int) 
 	return nil
 }
 
-// DownloadFileFromS3 downloads a file from an S3 bucket to the specified local destination.
+// DownloadFileFromS3 downloads a file from an S3 bucket to a local file path.
 func DownloadFileFromS3(bucketName, objectKey, destination string) error {
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
@@ -99,14 +93,8 @@ func DownloadFileFromS3(bucketName, objectKey, destination string) error {
 	return nil
 }
 
-// GeneratePresignedURL generates a presigned URL for accessing an S3 object with a specified expiration duration.
-// Parameters:
-// - bucketName (string): The name of the S3 bucket.
-// - objectKey (string): The key of the object in the S3 bucket.
-// - expiration (time.Duration): The duration for which the presigned URL will remain valid.
-// Returns:
-// - (string): The generated presigned URL.
-// - (error): An error if the URL generation fails.
+// GeneratePresignedURL generates a presigned URL for accessing an object in an S3 bucket with a specified expiration time.
+// It requires the bucket name, object key, and expiration duration as inputs and returns the presigned URL or an error.
 func GeneratePresignedURL(bucketName, objectKey string, expiration time.Duration) (string, error) {
 	//utils.LoadEnv()
 	cfg, err := config.LoadDefaultConfig(

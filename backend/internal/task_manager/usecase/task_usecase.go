@@ -9,18 +9,26 @@ import (
 	"strings"
 )
 
+// TaskUsecase defines the contract for processing OCR, translating content, and returning the result as a string.
 type TaskUsecase interface {
 	ProcessOCRAndTranslate(username string, fileContent []byte, lang string) (string, error)
 }
 
+// TaskUsecaseImpl provides the implementation for task-related business logic utilizing a UserRepository instance.
 type TaskUsecaseImpl struct {
 	ur repository.UserRepository
 }
 
+// NewTaskUsecase creates and initializes a new TaskUsecaseImpl with the provided UserRepository.
 func NewTaskUsecase(ur repository.UserRepository) *TaskUsecaseImpl {
 	return &TaskUsecaseImpl{ur: ur}
 }
 
+// ProcessOCRAndTranslate processes a file using OCR, decreases user balance, and translates the extracted text.
+// Parameters: username (string) - The name of the user requesting the process.
+// fileContent ([]byte) - The content of the file to be processed via OCR.
+// lang (string) - The language code used for OCR processing.
+// Returns: Translated text (string) if successful, or an error when a failure occurs during processing.
 func (t *TaskUsecaseImpl) ProcessOCRAndTranslate(username string, fileContent []byte, lang string) (string, error) {
 	ocrResponse, err := service.ProcessOCR(fileContent, lang)
 	if err != nil || ocrResponse == nil {
@@ -48,7 +56,7 @@ func (t *TaskUsecaseImpl) ProcessOCRAndTranslate(username string, fileContent []
 	return translatedResponse.Lines, nil
 }
 
-// mergeAndCleanStrings merges multiple strings into one and applies text cleaning.
+// mergeAndCleanStrings concatenates a slice of strings and applies text cleaning to the resulting string.
 func mergeAndCleanStrings(lines []string) string {
 	var builder strings.Builder
 	for _, line := range lines {

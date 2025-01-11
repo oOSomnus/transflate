@@ -10,12 +10,10 @@ import (
 	"strings"
 )
 
-/*
-AuthMiddleware is a Gin middleware function for handling JWT-based authentication.
-
-Returns:
-  - (gin.HandlerFunc): A middleware function to be used in the Gin router.
-*/
+// AuthMiddleware is a middleware function that verifies the validity of a JWT token in the Authorization header.
+// It ensures the token is present, well-formed, and contains valid claims.
+// If the token is invalid, expired, or missing, the request is aborted with an appropriate HTTP status and error message.
+// Upon successful validation, the claims (e.g., "username") are extracted and added to the Gin context for downstream handlers.
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const (
@@ -57,19 +55,19 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-// getAuthorizationHeader retrieves the "Authorization" header from the provided Gin context and returns its value.
+// getAuthorizationHeader retrieves the Authorization header value from the provided gin.Context.
 func getAuthorizationHeader(c *gin.Context) string {
 	log.Println("Retrieving Authorization header...")
 	return c.GetHeader("Authorization")
 }
 
-// extractBearerToken extracts the JWT token from the Authorization header by removing the "Bearer " prefix.
+// extractBearerToken extracts the Bearer token from the given Authorization header string.
 func extractBearerToken(authHeader string) string {
 	log.Println("Extracting JWT token from header...")
 	return strings.TrimPrefix(authHeader, "Bearer ")
 }
 
-// validateToken parses and validates a JWT token string for authenticity and signature using the configured secret key.
+// validateToken parses and validates a JWT token string using a predefined secret key and signing method.
 // Returns the parsed token and an error if the token is invalid or uses an unexpected signing method.
 func validateToken(tokenString string) (*jwt.Token, error) {
 	log.Printf("Validating token: %s", tokenString)
@@ -84,15 +82,15 @@ func validateToken(tokenString string) (*jwt.Token, error) {
 	)
 }
 
-// extractClaims extracts the claims from a given JWT token and checks if they are of type jwt.MapClaims.
-// Returns the claims and a boolean indicating success.
+// extractClaims extracts claims from a JWT token and asserts them as jwt.MapClaims.
+// Returns the extracted claims and a boolean indicating the success of the assertion.
 func extractClaims(token *jwt.Token) (jwt.MapClaims, bool) {
 	log.Println("Extracting token claims...")
 	claims, ok := token.Claims.(jwt.MapClaims)
 	return claims, ok
 }
 
-// abortWithError sends a JSON response with the specified status code and error message, then aborts further processing.
+// abortWithError sends a JSON response containing an error message with the specified status code and aborts the request.
 func abortWithError(c *gin.Context, statusCode int, message string) {
 	c.JSON(statusCode, gin.H{"error": message})
 	c.Abort()

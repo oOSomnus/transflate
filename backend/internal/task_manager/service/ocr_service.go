@@ -11,12 +11,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// grpcConn holds the gRPC client connection instance, which is initialized only once.
+// grpcConnOnce ensures that the gRPC client connection is established exactly once.
+// grpcConnErr captures any error that occurs during the initialization of grpcConn.
 var (
 	grpcConn     *grpc.ClientConn
 	grpcConnOnce sync.Once
 	grpcConnErr  error
 )
 
+// getOcrGRPCConn establishes and returns a gRPC client connection to the OCR service, ensuring it's created only once.
 func getOcrGRPCConn() (*grpc.ClientConn, error) {
 	grpcConnOnce.Do(
 		func() {
@@ -30,6 +34,7 @@ func getOcrGRPCConn() (*grpc.ClientConn, error) {
 	return grpcConn, grpcConnErr
 }
 
+// CloseOcrGRPCConn closes the OCR gRPC connection if it exists and returns an error if the closure fails.
 func CloseOcrGRPCConn() error {
 	if grpcConn != nil {
 		return grpcConn.Close()
@@ -37,10 +42,10 @@ func CloseOcrGRPCConn() error {
 	return nil
 }
 
-// ProcessOCR processes an OCR request by sending the given file content and language to the OCR service via gRPC.
-// Parameters: fileContent ([]byte) - The content of the file to be processed.
+// ProcessOCR processes a PDF file's content using OCR with the specified language and returns the extracted text and metadata.
+// Parameters: fileContent ([]byte) - The binary content of the PDF file.
 // lang (string) - The language code for OCR processing.
-// Returns: *pb.StringListResponse containing extracted text data, or an error if the process fails.
+// Returns: Extracted text as a StringListResponse and an error if processing fails.
 func ProcessOCR(fileContent []byte, lang string) (*pb.StringListResponse, error) {
 	conn, err := getOcrGRPCConn()
 	if err != nil {

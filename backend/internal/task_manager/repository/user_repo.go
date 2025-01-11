@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+// UserRepository defines methods for user management including retrieval, creation, and balance operations.
+// FindUsrWithUsername retrieves a user's information using their username.
+// IfUserExists checks whether a user with the given username exists.
+// CreateUser creates a new user with the specified username and password.
+// DecreaseBalance reduces the user's balance by the specified amount.
+// GetBalance retrieves the current balance of the user.
 type UserRepository interface {
 	FindUsrWithUsername(username string) (string, error)
 	IfUserExists(username string) (bool, error)
@@ -17,18 +23,20 @@ type UserRepository interface {
 	GetBalance(username string) (int, error)
 }
 
+// UserRepositoryImpl interacts with the database to perform user-related operations like querying and updating data.
+// It wraps around an *sql.DB instance for executing SQL queries and managing transactions.
 type UserRepositoryImpl struct {
 	DB *sql.DB
 }
 
+// NewUserRepository initializes a new UserRepositoryImpl with a given sql.DB connection and returns its instance.
 func NewUserRepository(db *sql.DB) *UserRepositoryImpl {
 	return &UserRepositoryImpl{
 		DB: db,
 	}
 }
 
-// FindUsrWithUsername retrieves the password hash associated with a given username from the database.
-// Returns the password hash or an error if the user does not exist or a query error occurs.
+// FindUsrWithUsername retrieves the hashed password for a given username from the database or returns an error if not found.
 func (r *UserRepositoryImpl) FindUsrWithUsername(username string) (string, error) {
 	query := "SELECT password FROM users WHERE username = $1"
 	row := r.DB.QueryRow(query, username)
@@ -43,9 +51,7 @@ func (r *UserRepositoryImpl) FindUsrWithUsername(username string) (string, error
 	return pwd, nil
 }
 
-// IfUserExists checks if a user exists in the database based on the provided username.
-// Returns true and nil if the user exists, false and nil if the user does not exist,
-// or false and an error if any database error occurs.
+// IfUserExists checks if a user with the given username exists in the database. Returns true if user exists, else false.
 func (r *UserRepositoryImpl) IfUserExists(username string) (bool, error) {
 	query := "SELECT userid FROM users WHERE username = $1"
 	row := r.DB.QueryRow(query, username)
@@ -60,8 +66,8 @@ func (r *UserRepositoryImpl) IfUserExists(username string) (bool, error) {
 	return true, nil
 }
 
-// CreateUser inserts a new user into the database with the specified username and password.
-// Returns an error if the database operation fails.
+// CreateUser inserts a new user into the database with the provided username and password.
+// It returns an error if the operation fails.
 func (r *UserRepositoryImpl) CreateUser(username string, password string) error {
 	query := "INSERT INTO users (username, password) VALUES ($1, $2)"
 	_, err := r.DB.Exec(query, username, password)
@@ -71,12 +77,8 @@ func (r *UserRepositoryImpl) CreateUser(username string, password string) error 
 	return nil
 }
 
-// DecreaseBalance decreases the user's balance by the specified amount, ensuring atomicity and handling possible errors.
-// Parameters:
-// - username (string): The username of the user whose balance is to be reduced.
-// - balance (int): The amount to be deducted from the user's balance.
-// Returns:
-// - error: An error if the operation fails due to invalid input, insufficient balance, or database operation issues.
+// DecreaseBalance decreases the balance of the specified user by the given amount.
+// Returns an error if the balance is insufficient, the user is not found, or there is a transaction/database failure.
 func (r *UserRepositoryImpl) DecreaseBalance(username string, balance int) error {
 	if balance <= 0 {
 		return errors.New("invalid amount")
@@ -123,8 +125,8 @@ func (r *UserRepositoryImpl) DecreaseBalance(username string, balance int) error
 	return nil
 }
 
-// GetBalance retrieves the account balance for the specified username from the database.
-// Returns the balance as an integer and an error if the query fails or the user is not found.
+// GetBalance retrieves the balance of a user by their username from the database.
+// It returns the balance as an integer or an error if an issue occurs or the user is not found.
 func (r *UserRepositoryImpl) GetBalance(username string) (int, error) {
 	query := "SELECT balance FROM users WHERE username = $1"
 	row := r.DB.QueryRow(query, username)

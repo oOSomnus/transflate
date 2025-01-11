@@ -11,12 +11,18 @@ import (
 	"time"
 )
 
+// transGrpcConn represents a gRPC client connection, shared across the application.
+// transGrpcOnce ensures the initialization of transGrpcConn is done only once.
+// transGrpcErr stores any error encountered during the initialization of transGrpcConn.
 var (
 	transGrpcConn *grpc.ClientConn
 	transGrpcOnce sync.Once
 	transGrpcErr  error
 )
 
+// getTransGrpcConn initializes and returns a gRPC client connection for the translation service.
+// It ensures that the connection setup is executed only once using sync.Once.
+// Returns the client connection and any error encountered during initialization.
 func getTransGrpcConn() (*grpc.ClientConn, error) {
 	transGrpcOnce.Do(
 		func() {
@@ -33,6 +39,7 @@ func getTransGrpcConn() (*grpc.ClientConn, error) {
 	return transGrpcConn, transGrpcErr
 }
 
+// CloseTransGrpcConn closes the translation gRPC connection and returns an error if the closure fails.
 func CloseTransGrpcConn() error {
 	err := transGrpcConn.Close()
 	if err != nil {
@@ -41,7 +48,7 @@ func CloseTransGrpcConn() error {
 	return nil
 }
 
-// TranslateText translates the given text by sending a gRPC request to the translation service and returns the result.
+// TranslateText translates the given text by sending it to the translation service via gRPC and returns the result.
 func TranslateText(text string) (*pbt.TranslateResult, error) {
 	conn, err := getTransGrpcConn()
 	if err != nil {
