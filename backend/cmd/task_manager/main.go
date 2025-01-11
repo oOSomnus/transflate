@@ -7,11 +7,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/cmd/task_manager/config"
 	"github.com/oOSomnus/transflate/internal/task_manager/handlers"
+	"github.com/oOSomnus/transflate/internal/task_manager/repository"
 	"github.com/oOSomnus/transflate/internal/task_manager/service"
+	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/middleware"
 	"github.com/spf13/viper"
 	"log"
 	"os"
+)
+
+const (
+	defaultPort        = ":8080"
+	defaultEnvironment = "local"
+	configType         = "yaml"
+	pgUsernameKey      = "pg.username"
+	pgPasswordKey      = "pg.password"
+	corsAllowOriginKey = "cors.allow-origin"
 )
 
 func init() {
@@ -19,39 +30,62 @@ func init() {
 	log.SetPrefix("[Task Manager Service] ")
 }
 
-const (
-	defaultPort         = ":8080"
-	defaultEnvironment  = "local"
-	configType          = "yaml"
-	ginModeConfigKey    = "gin.mode"
-	corsAllowOriginKey  = "cors.allow-origin"
-	jwtSecretConfigKey  = "jwt.secret"
-	trustedProxiesCIDR1 = "172.18.0.0/16"
-	trustedProxiesCIDR2 = "127.0.0.1"
-)
-
 func main() {
 	initializeConfig()
-	initializeServerDependencies()
-
-	r := gin.Default()
-	setupTrustedProxies(r)
-	setupCORS(r)
-
-	registerRoutes(r)
-
+	r := initializeServer()
 	log.Printf("Starting server on %s", defaultPort)
-	deferResourceCleanup()
 	if err := r.Run(defaultPort); err != nil {
 		log.Fatal(err)
 	}
 }
 
+// initializeServer handles all the setup logic for the server
+func initializeServer() *gin.Engine {
+	gin.SetMode(viper.GetString("gin.mode"))
+
+	// Check database configuration
+	if viper.GetString(pgUsernameKey) == "" || viper.GetString(pgPasswordKey) == "" {
+		log.Fatalf("Database username or password is missing in the configuration")
+	}
+
+	// Establish database connection
+	pgConfig := config.NewPostgresConfig()
+	dbConnection, err := pgConfig.Connect()
+	if err != nil {
+		log.Fatalf("Error connecting to database: %v", err)
+	}
+
+	r := gin.Default()
+	setupTrustedProxies(r)
+	setupCORS(r)
+
+	// Initialize repositories, use cases, and handlers
+	userRepo := repository.NewUserRepository(dbConnection)
+	userHandler := handlers.NewUserHandler(usecase.NewUserUsecase(userRepo))
+	taskHandler := handlers.NewTaskHandler(usecase.NewTaskUsecase(userRepo))
+
+	// Register routes
+	r.POST("/login", userHandler.Login)
+	r.POST("/register", userHandler.Register)
+
+	auth := r.Group("/")
+	auth.Use(middleware.AuthMiddleware())
+	auth.POST("/submit", taskHandler.TaskSubmit)
+	auth.GET("/user/info", userHandler.Info)
+
+	// Handle closing resources
+	closeServices(dbConnection)
+
+	return r
+}
+
+// initializeConfig sets up the configuration based on the environment
 func initializeConfig() {
 	environment := os.Getenv("TRANSFLATE_ENV")
 	if environment == "" {
 		environment = defaultEnvironment
 	}
+
 	viper.SetConfigName(fmt.Sprintf("config.%s", environment))
 	viper.SetConfigType(configType)
 	viper.AddConfigPath(".")
@@ -60,21 +94,15 @@ func initializeConfig() {
 	}
 }
 
-func initializeServerDependencies() {
-	gin.SetMode(viper.GetString(ginModeConfigKey))
-	config.ConnectDB()
-	if config.DB == nil {
-		log.Fatal("Database connection failed")
-	}
-}
-
+// setupTrustedProxies configures trusted proxies for the server
 func setupTrustedProxies(r *gin.Engine) {
-	trustedProxies := []string{trustedProxiesCIDR1, trustedProxiesCIDR2}
+	trustedProxies := []string{"172.18.0.0/16", "127.0.0.1"}
 	if err := r.SetTrustedProxies(trustedProxies); err != nil {
 		log.Fatalf("Error setting trusted proxies: %v", err)
 	}
 }
 
+// setupCORS configures CORS settings
 func setupCORS(r *gin.Engine) {
 	allowOrigin := viper.GetString(corsAllowOriginKey)
 	r.Use(
@@ -90,28 +118,20 @@ func setupCORS(r *gin.Engine) {
 	log.Printf("CORS setting: %s", allowOrigin)
 }
 
-func registerRoutes(r *gin.Engine) {
-	r.POST("/login", handlers.Login)
-	r.POST("/register", handlers.Register)
-
-	auth := r.Group("/")
-	auth.Use(middleware.AuthMiddleware())
-	auth.POST("/submit", handlers.TaskSubmit)
-	auth.GET("/user/info", handlers.Info)
-}
-
-func deferResourceCleanup() {
-	defer func(db *sql.DB) {
-		if err := db.Close(); err != nil {
-			log.Fatal(err)
+// closeServices ensures all resources are properly closed on shutdown
+func closeServices(db *sql.DB) {
+	defer func() {
+		if db != nil && db.Close() != nil {
+			log.Println("Error closing database connection")
 		}
-	}(config.DB)
+	}()
 
 	defer func() {
 		if err := service.CloseOcrGRPCConn(); err != nil {
 			log.Println(err)
 		}
 	}()
+
 	defer func() {
 		if err := service.CloseTransGrpcConn(); err != nil {
 			log.Println(err)

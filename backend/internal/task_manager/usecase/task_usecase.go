@@ -2,18 +2,26 @@ package usecase
 
 import (
 	"errors"
+	"github.com/oOSomnus/transflate/internal/task_manager/repository"
 	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"log"
 	"strings"
 )
 
-// ProcessOCRAndTranslate processes the OCR on a file, translates the extracted text, and handles user balance decrement.
-// Parameters: usernameStr (string) - The username for balance deduction; fileContent ([]byte) - File data for OCR;
-// lang (string) - The target OCR language.
-// Returns: Translated text (string) or an error if the process fails.
-// ProcessOCRAndTranslate processes the OCR on a file, translates the extracted text, and handles user balance decrement.
-func ProcessOCRAndTranslate(username string, fileContent []byte, lang string) (string, error) {
+type TaskUsecase interface {
+	ProcessOCRAndTranslate(username string, fileContent []byte, lang string) (string, error)
+}
+
+type TaskUsecaseImpl struct {
+	ur repository.UserRepository
+}
+
+func NewTaskUsecase(ur repository.UserRepository) *TaskUsecaseImpl {
+	return &TaskUsecaseImpl{ur: ur}
+}
+
+func (t *TaskUsecaseImpl) ProcessOCRAndTranslate(username string, fileContent []byte, lang string) (string, error) {
 	ocrResponse, err := service.ProcessOCR(fileContent, lang)
 	if err != nil || ocrResponse == nil {
 		log.Println("Error during OCR processing:", err)
@@ -25,7 +33,7 @@ func ProcessOCRAndTranslate(username string, fileContent []byte, lang string) (s
 
 	// Decrease user balance based on the number of pages
 	numPages := int(ocrResponse.PageNum)
-	if err = DecreaseBalance(username, numPages); err != nil {
+	if err = t.ur.DecreaseBalance(username, numPages); err != nil {
 		log.Printf("Error decreasing balance for user %s: %v", username, err)
 		return "", err
 	}

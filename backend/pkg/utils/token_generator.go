@@ -6,16 +6,7 @@ import (
 	"time"
 )
 
-/*
-GenerateToken generates a JWT token for the given username.
-
-Parameters:
-  - username (string): The username to include in the token claims.
-
-Returns:
-  - (string): The generated JWT token as a string.
-  - (error): An error if the token signing process fails.
-*/
+// GenerateToken generates a JWT token for a given username with a 24-hour expiration time. Returns the token or an error.
 func GenerateToken(username string) (string, error) {
 	//LoadEnv()
 	var jwtSecret = []byte(viper.GetString("jwt.secret"))

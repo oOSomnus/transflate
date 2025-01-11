@@ -5,16 +5,33 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/oOSomnus/transflate/cmd/task_manager/config"
 	"log"
 	"time"
 )
 
+type UserRepository interface {
+	FindUsrWithUsername(username string) (string, error)
+	IfUserExists(username string) (bool, error)
+	CreateUser(username string, password string) error
+	DecreaseBalance(username string, balance int) error
+	GetBalance(username string) (int, error)
+}
+
+type UserRepositoryImpl struct {
+	DB *sql.DB
+}
+
+func NewUserRepository(db *sql.DB) *UserRepositoryImpl {
+	return &UserRepositoryImpl{
+		DB: db,
+	}
+}
+
 // FindUsrWithUsername retrieves the password hash associated with a given username from the database.
 // Returns the password hash or an error if the user does not exist or a query error occurs.
-func FindUsrWithUsername(username string) (string, error) {
+func (r *UserRepositoryImpl) FindUsrWithUsername(username string) (string, error) {
 	query := "SELECT password FROM users WHERE username = $1"
-	row := config.DB.QueryRow(query, username)
+	row := r.DB.QueryRow(query, username)
 	var pwd string
 	err := row.Scan(&pwd)
 	if err != nil {
@@ -29,9 +46,9 @@ func FindUsrWithUsername(username string) (string, error) {
 // IfUserExists checks if a user exists in the database based on the provided username.
 // Returns true and nil if the user exists, false and nil if the user does not exist,
 // or false and an error if any database error occurs.
-func IfUserExists(username string) (bool, error) {
+func (r *UserRepositoryImpl) IfUserExists(username string) (bool, error) {
 	query := "SELECT userid FROM users WHERE username = $1"
-	row := config.DB.QueryRow(query, username)
+	row := r.DB.QueryRow(query, username)
 	var userId int
 	err := row.Scan(&userId)
 	if err != nil {
@@ -45,9 +62,9 @@ func IfUserExists(username string) (bool, error) {
 
 // CreateUser inserts a new user into the database with the specified username and password.
 // Returns an error if the database operation fails.
-func CreateUser(username string, password string) error {
+func (r *UserRepositoryImpl) CreateUser(username string, password string) error {
 	query := "INSERT INTO users (username, password) VALUES ($1, $2)"
-	_, err := config.DB.Exec(query, username, password)
+	_, err := r.DB.Exec(query, username, password)
 	if err != nil {
 		return err
 	}
@@ -60,7 +77,7 @@ func CreateUser(username string, password string) error {
 // - balance (int): The amount to be deducted from the user's balance.
 // Returns:
 // - error: An error if the operation fails due to invalid input, insufficient balance, or database operation issues.
-func DecreaseBalance(username string, balance int) error {
+func (r *UserRepositoryImpl) DecreaseBalance(username string, balance int) error {
 	if balance <= 0 {
 		return errors.New("invalid amount")
 	}
@@ -68,7 +85,7 @@ func DecreaseBalance(username string, balance int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	tx, err := config.DB.BeginTx(ctx, nil)
+	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
@@ -108,9 +125,9 @@ func DecreaseBalance(username string, balance int) error {
 
 // GetBalance retrieves the account balance for the specified username from the database.
 // Returns the balance as an integer and an error if the query fails or the user is not found.
-func GetBalance(username string) (int, error) {
+func (r *UserRepositoryImpl) GetBalance(username string) (int, error) {
 	query := "SELECT balance FROM users WHERE username = $1"
-	row := config.DB.QueryRow(query, username)
+	row := r.DB.QueryRow(query, username)
 	var balance int
 	err := row.Scan(&balance)
 	if err != nil {

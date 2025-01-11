@@ -20,11 +20,23 @@ func init() {
 	log.SetPrefix("[Task handler] ")
 }
 
+type TaskHandler interface {
+	TaskSubmit(c *gin.Context)
+}
+
+type TaskHandlerImpl struct {
+	Usecase usecase.TaskUsecase
+}
+
+func NewTaskHandler(u usecase.TaskUsecase) *TaskHandlerImpl {
+	return &TaskHandlerImpl{Usecase: u}
+}
+
 // TaskSubmit handles the submission of a task by an authenticated user, processes the uploaded PDF file, and generates a downloadable link.
 // It validates the session, ensures the uploaded file is a PDF, reads its contents, and performs OCR and translation.
 // The result is converted to a markdown-based response and uploaded to generate a presigned download link.
 // Responds with the download link or appropriate error in JSON format.
-func TaskSubmit(c *gin.Context) {
+func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 	log.Println("Processing new task submission...")
 
 	usernameStr, err := getAuthenticatedUsername(c)
@@ -42,7 +54,7 @@ func TaskSubmit(c *gin.Context) {
 	lang := c.DefaultPostForm("lang", "eng")
 
 	// Process OCR and Translation
-	transResponse, err := usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
+	transResponse, err := h.Usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
 	if err != nil {
 		log.Printf("Error processing OCR and translation: %v", err)
 		handleError(c, http.StatusBadRequest, "Failed to process OCR")

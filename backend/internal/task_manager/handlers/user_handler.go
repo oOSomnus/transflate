@@ -20,8 +20,22 @@ const (
 	errBalanceCheckFailed = "Error checking balance"
 )
 
+type UserHandler interface {
+	Login(c *gin.Context)
+	Register(c *gin.Context)
+	Info(c *gin.Context)
+}
+
+type UserHandlerImpl struct {
+	Usecase usecase.UserUsecase
+}
+
+func NewUserHandler(u usecase.UserUsecase) *UserHandlerImpl {
+	return &UserHandlerImpl{Usecase: u}
+}
+
 // bindJSONAndValidate is a helper function to bind and validate JSON request payloads.
-func bindJSONAndValidate(c *gin.Context, req interface{}) bool {
+func (h *UserHandlerImpl) bindJSONAndValidate(c *gin.Context, req interface{}) bool {
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": errInvalidRequest})
 		return false
@@ -30,10 +44,10 @@ func bindJSONAndValidate(c *gin.Context, req interface{}) bool {
 }
 
 // Login handles user authentication by validating credentials, verifying Turnstile token, and returning a JWT token.
-func Login(c *gin.Context) {
+func (h *UserHandlerImpl) Login(c *gin.Context) {
 	var userRequest domain.UserRequest
 
-	if !bindJSONAndValidate(c, &userRequest) {
+	if !h.bindJSONAndValidate(c, &userRequest) {
 		return
 	}
 
@@ -42,7 +56,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	isAuthenticated, err := usecase.Authenticate(userRequest.Username, userRequest.Password)
+	isAuthenticated, err := h.Usecase.Authenticate(userRequest.Username, userRequest.Password)
 	if err != nil || !isAuthenticated {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": errAuthFailure})
 		return
@@ -64,15 +78,15 @@ func Login(c *gin.Context) {
 }
 
 // Register handles user registration by processing the incoming JSON request, validating input, and creating a new user.
-func Register(c *gin.Context) {
+func (h *UserHandlerImpl) Register(c *gin.Context) {
 	var userRequest domain.UserRequest
 
-	if !bindJSONAndValidate(c, &userRequest) {
+	if !h.bindJSONAndValidate(c, &userRequest) {
 		log.Println("Error: Invalid registration request")
 		return
 	}
 
-	if err := usecase.CreateUser(userRequest.Username, userRequest.Password); err != nil {
+	if err := h.Usecase.CreateUser(userRequest.Username, userRequest.Password); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		log.Printf("Error: Failed to create user for username %s: %v", userRequest.Username, err)
 		return
@@ -86,7 +100,7 @@ func Register(c *gin.Context) {
 }
 
 // Info handles retrieving user information, including username and balance, and returns JSON responses based on the outcome.
-func Info(c *gin.Context) {
+func (h *UserHandlerImpl) Info(c *gin.Context) {
 	username, exists := c.Get("username")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": errUserUnauthorized})
@@ -99,7 +113,7 @@ func Info(c *gin.Context) {
 		return
 	}
 
-	balance, err := usecase.CheckBalance(usernameStr)
+	balance, err := h.Usecase.CheckBalance(usernameStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": errBalanceCheckFailed})
 		log.Printf("Error: Failed to check balance for username %s: %v", usernameStr, err)
