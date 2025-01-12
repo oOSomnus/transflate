@@ -15,7 +15,8 @@ type TaskStatusService interface {
 	UpdateTaskStatus(string, string, int) error
 	GetTaskStatus(string, string) (int, error)
 	CreateNewTask(string) (string, error)
-	GetAllTask(string) (map[string]int, error)
+	GetAllTask(string) (map[string]map[string]interface{}, error)
+	UpdateTaskDownloadLink(string, string, string) error
 }
 
 // TaskStatusServiceImpl provides methods to manage task states via a TaskRepository.
@@ -87,7 +88,7 @@ func (tss *TaskStatusServiceImpl) GetTaskStatus(username string, taskID string) 
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	status, err := tss.tr.GetTaskState(ctx, idUsername, taskUUID)
+	status, _, err := tss.tr.GetTaskState(ctx, idUsername, taskUUID)
 	if err != nil {
 		log.Printf("Error handling update: %v", err)
 		return 0, errors.New(ErrorAccessingData)
@@ -119,7 +120,7 @@ func parseTaskID(taskID string) (string, string, error) {
 }
 
 // GetAllTask fetches all tasks along with their status for the specified username and returns them as a map.
-func (tss *TaskStatusServiceImpl) GetAllTask(username string) (map[string]int, error) {
+func (tss *TaskStatusServiceImpl) GetAllTask(username string) (map[string]map[string]interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	allTasks, err := tss.tr.FetchAllTask(ctx, username)
@@ -128,4 +129,15 @@ func (tss *TaskStatusServiceImpl) GetAllTask(username string) (map[string]int, e
 		return nil, errors.New(ErrorAccessingData)
 	}
 	return allTasks, nil
+}
+
+// UpdateTaskDownloadLink updates the download link of a specific task for the given username and task ID. Returns an error if failed.
+func (tss *TaskStatusServiceImpl) UpdateTaskDownloadLink(username string, taskID string, link string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := tss.tr.UpdateTaskLink(ctx, username, taskID, link); err != nil {
+		log.Printf("Error updating task link: %v", err)
+		return errors.New(ErrorAccessingData)
+	}
+	return nil
 }

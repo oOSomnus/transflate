@@ -94,8 +94,11 @@ func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 		return
 	}
 
-	//TODO: do something with downLink
-	print(downLink)
+	if err = h.TaskStatusService.UpdateTaskDownloadLink(usernameStr, taskId, downLink); err != nil {
+		log.Printf("Error updating task download link: %v", err)
+		handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+		return
+	}
 }
 
 // getAuthenticatedUsername retrieves the username of the authenticated user from the given Gin context.

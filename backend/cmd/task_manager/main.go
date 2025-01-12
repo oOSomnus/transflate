@@ -174,6 +174,7 @@ func setupRoutes(r *gin.Engine, userHandler *handlers.UserHandlerImpl, taskHandl
 	auth.Use(middleware.AuthMiddleware())
 	auth.POST("/submit", taskHandler.TaskSubmit)
 	auth.GET("/user/info", userHandler.Info)
+
 }
 
 // verifyDatabaseCredentials ensures the presence of database username and password in the application configuration.
