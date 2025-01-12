@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
 	"log"
@@ -23,12 +24,13 @@ type TaskHandler interface {
 
 // TaskHandlerImpl is a struct that implements task-related HTTP handlers by leveraging the TaskUsecase interface.
 type TaskHandlerImpl struct {
-	Usecase usecase.TaskUsecase
+	Usecase           usecase.TaskUsecase
+	TaskStatusService service.TaskStatusService
 }
 
 // NewTaskHandler creates and returns a new instance of TaskHandlerImpl with the provided TaskUsecase instance.
-func NewTaskHandler(u usecase.TaskUsecase) *TaskHandlerImpl {
-	return &TaskHandlerImpl{Usecase: u}
+func NewTaskHandler(u usecase.TaskUsecase, tss service.TaskStatusService) *TaskHandlerImpl {
+	return &TaskHandlerImpl{Usecase: u, TaskStatusService: tss}
 }
 
 // TaskSubmit handles task submission by processing an uploaded file, performing OCR and translation, and returning a download link.

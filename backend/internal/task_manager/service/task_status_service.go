@@ -23,6 +23,10 @@ type TaskStatusServiceImpl struct {
 	tr repository.TaskRepository
 }
 
+func NewTaskStatusService(tr repository.TaskRepository) *TaskStatusServiceImpl {
+	return &TaskStatusServiceImpl{tr: tr}
+}
+
 // InvalidTaskId represents the error message for an invalid task ID.
 // NotAuthorized indicates the error message when the user is not authorized.
 // ErrorAccessingData is the error message for issues encountered while accessing data.
@@ -41,6 +45,7 @@ const (
 	ProcessingImages = 1
 	ProcesingText    = 2
 	Done             = 3
+	Error            = 9
 )
 
 // UpdateTaskStatus updates the status of a task for a given username and taskID.
@@ -91,9 +96,18 @@ func (tss *TaskStatusServiceImpl) GetTaskStatus(username string, taskID string) 
 }
 
 // CreateNewTask generates a new task ID by combining the provided username with a newly generated UUID.
-func (tss *TaskStatusServiceImpl) CreateNewTask(username string) string {
+func (tss *TaskStatusServiceImpl) CreateNewTask(username string) (string, error) {
 	newId := uuid.New()
-	return username + "-" + newId.String()
+	taskId := username + "-" + newId.String()
+	qKey := getQueryKey(username, newId.String())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err := tss.tr.SetTaskState(ctx, qKey, TaskReceived, 12*time.Hour)
+	if err != nil {
+		log.Printf("Error handling update: %v", err)
+		return "", errors.New(ErrorAccessingData)
+	}
+	return taskId, nil
 }
 
 // parseTaskID splits the provided taskID string into username and task UUID. It returns an error if the format is invalid.

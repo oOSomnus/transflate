@@ -100,8 +100,10 @@ func initializeServer(db *sql.DB, redisClient *config.RedisClient) *gin.Engine {
 
 	defer cleanupServiceResources(ocrService, translateService)
 
+	taskStatusService := service.NewTaskStatusService(taskRepo)
+
 	taskUsecase := usecase.NewTaskUsecase(userRepo, taskRepo, ocrService, s3Service, translateService)
-	taskHandler := handlers.NewTaskHandler(taskUsecase)
+	taskHandler := handlers.NewTaskHandler(taskUsecase, taskStatusService)
 
 	setupRoutes(r, userHandler, taskHandler)
 
