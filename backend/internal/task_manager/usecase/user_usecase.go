@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/oOSomnus/transflate/internal/task_manager/repository"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 )
 
 // UserUsecase defines the operations related to user management in the system.
@@ -38,8 +39,10 @@ func NewUserUsecase(r repository.UserRepository) *UserUsecaseImpl {
 const (
 	ErrInvalidCredentials = "invalid username or password"
 	ErrUserAlreadyExists  = "user already exists"
+	ErrCreateUser         = "failed to create user"
 	ErrEmptyInput         = "username and password cannot be empty"
 	ErrInvalidRegInfo     = "invalid registration information"
+	ErrInvalidUsrInput    = "invalid user input"
 )
 
 // Authenticate verifies if the provided username and password are valid and returns a boolean and potential error.
@@ -75,14 +78,20 @@ func (u *UserUsecaseImpl) CreateUser(username, password string) error {
 		return errors.New(ErrInvalidRegInfo)
 	}
 	if err := u.validateUserInput(username, password); err != nil {
-		return err
+		log.Println("error validating user input")
+		return errors.New(ErrInvalidUsrInput)
 	}
 	if exists, err := u.Repo.IfUserExists(username); err != nil {
 		return fmt.Errorf("failed to check user existence: %w", err)
 	} else if exists {
+		log.Println("user already exists")
 		return errors.New(ErrUserAlreadyExists)
 	}
-	return u.createUserInRepository(username, password)
+	if err := u.createUserInRepository(username, password); err != nil {
+		log.Println("error creating user")
+		return errors.New(ErrCreateUser)
+	}
+	return nil
 }
 
 // validateUserInput validates the username and password input, ensuring they are not empty. Returns an error if invalid.

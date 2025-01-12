@@ -51,23 +51,51 @@ func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 
 	lang := c.DefaultPostForm("lang", "eng")
 
+	taskId, err := h.TaskStatusService.CreateNewTask(usernameStr)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to create new task")
+		return
+	}
+
+	log.Printf("Created new task with ID %s", taskId)
+	c.JSON(http.StatusOK, gin.H{"data": taskId})
+	err = h.TaskStatusService.UpdateTaskStatus(usernameStr, taskId, service.Translating)
+	if err != nil {
+		log.Printf(
+			"Error updating task status: %v", err,
+		)
+		handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+		return
+	}
 	// Process OCR and Translation
 	transResponse, err := h.Usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
 	if err != nil {
 		log.Printf("Error processing OCR and translation: %v", err)
-		handleError(c, http.StatusBadRequest, "Failed to process OCR")
+		handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
 		return
 	}
-
+	err = h.TaskStatusService.UpdateTaskStatus(usernameStr, taskId, service.Uploading)
+	if err != nil {
+		log.Printf("Error updating task status: %v", err)
+		handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+		return
+	}
 	// Create download link
 	downLink, err := h.Usecase.CreateDownloadLinkWithMdString(transResponse)
 	if err != nil {
 		log.Printf("Error generating download link: %v", err)
-		handleError(c, http.StatusInternalServerError, "Failed to generate download link")
+		handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+		return
+	}
+	err = h.TaskStatusService.UpdateTaskStatus(usernameStr, taskId, service.Done)
+	if err != nil {
+		log.Printf("Error updating task status: %v", err)
+		handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": downLink})
+	//TODO: do something with downLink
+	print(downLink)
 }
 
 // getAuthenticatedUsername retrieves the username of the authenticated user from the given Gin context.
@@ -107,4 +135,12 @@ func handleFileUpload(c *gin.Context) ([]byte, error) {
 func handleError(c *gin.Context, statusCode int, message string) {
 	log.Println(message)
 	c.JSON(statusCode, gin.H{"error": message})
+}
+
+func handleTaskStatusError(username string, taskId string, taskHandler service.TaskStatusService) {
+	err := taskHandler.UpdateTaskStatus(username, taskId, service.Error)
+	if err != nil {
+		log.Printf("Error updating task status: %v", err)
+		return
+	}
 }

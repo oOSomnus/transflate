@@ -85,36 +85,21 @@ func (h *UserHandlerImpl) Login(c *gin.Context) {
 	)
 }
 
-// Register handles the registration of a new user by validating the input and creating a user through the UserUsecase.
 func (h *UserHandlerImpl) Register(c *gin.Context) {
-	var userRequest domain.UserRequest
+	var req domain.UserRequest
 
-	if !h.bindJSONAndValidate(c, &userRequest) {
-		log.Println("Error: Invalid registration request")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		log.Println("Error: Invalid request")
 		return
 	}
 
-	if err := h.Usecase.CreateUser(userRequest.Username, userRequest.Password); err != nil {
-		// Hash the user's password before saving it to the database
-		hashedPassword, err := utils.HashPassword(userRequest.Password)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process password"})
-			log.Printf("Error: Failed to hash password for username %s: %v", userRequest.Username, err)
-			return
-		}
-
-		// Use the hashed password when creating the user
-		if err := h.Usecase.CreateUser(userRequest.Username, hashedPassword); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-			log.Printf("Error: Failed to create user for username %s: %v", userRequest.Username, err)
-			return
-		}
-
+	err := h.Usecase.CreateUser(req.Username, req.Password)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-		log.Printf("Error: Failed to create user for username %s: %v", userRequest.Username, err)
+		log.Println("Error: Failed to create user")
 		return
 	}
-
 	c.JSON(
 		http.StatusOK, gin.H{
 			"message": "User created successfully",

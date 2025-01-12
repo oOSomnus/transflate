@@ -10,46 +10,48 @@ import (
 	"time"
 )
 
-// TaskStatusService represents a service for managing and retrieving task statuses.
-// Provides methods to update, retrieve, and create task statuses.
+// TaskStatusService provides methods to manage and query the status of tasks, including updating, retrieving, and creating tasks.
 type TaskStatusService interface {
 	UpdateTaskStatus(string, string, int) error
 	GetTaskStatus(string, string) (int, error)
 	CreateNewTask(string) (string, error)
+	GetAllTask(string) (map[string]int, error)
 }
 
-// TaskStatusServiceImpl is a service implementation that interacts with TaskRepository to manage task states.
+// TaskStatusServiceImpl provides methods to manage task states via a TaskRepository.
+// It includes functionalities for creating, updating, retrieving, and fetching tasks.
 type TaskStatusServiceImpl struct {
 	tr repository.TaskRepository
 }
 
+// NewTaskStatusService initializes and returns a new instance of TaskStatusServiceImpl with the provided TaskRepository.
 func NewTaskStatusService(tr repository.TaskRepository) *TaskStatusServiceImpl {
 	return &TaskStatusServiceImpl{tr: tr}
 }
 
-// InvalidTaskId represents the error message for an invalid task ID.
-// NotAuthorized indicates the error message when the user is not authorized.
-// ErrorAccessingData is the error message for issues encountered while accessing data.
+// InvalidTaskId indicates that the provided Task ID is invalid.
+// NotAuthorized represents an authorization failure error message.
+// ErrorAccessingData signifies an error occurred while accessing data.
 const (
 	InvalidTaskId      = "invalid Task ID"
 	NotAuthorized      = "not Authorized"
 	ErrorAccessingData = "error accessing data"
 )
 
-// TaskReceived represents the initial state when a task is received.
-// ProcessingImages represents the state where the task involves image processing.
-// ProcesingText represents the state where the task involves text processing.
-// Done represents the state when the task is completed.
+// TaskReceived represents the state where a task has been received and not yet processed.
+// ProcessingImages indicates that the task is currently processing images.
+// ProcesingText signifies that the task is processing textual data.
+// Done denotes that the task has been completed successfully.
+// Error represents the state where an error occurred in task processing.
 const (
-	TaskReceived     = 0
-	ProcessingImages = 1
-	ProcesingText    = 2
-	Done             = 3
-	Error            = 9
+	TaskReceived = 0
+	Translating  = 1
+	Uploading    = 2
+	Done         = 3
+	Error        = 9
 )
 
-// UpdateTaskStatus updates the status of a task for a given username and taskID.
-// Returns an error if the taskID is invalid, unauthorized, or if there is an issue accessing data.
+// UpdateTaskStatus updates the status of the specified task if the username matches and returns an error if any issue occurs.
 func (tss *TaskStatusServiceImpl) UpdateTaskStatus(username string, taskID string, status int) error {
 	// taskId format: username-UUID
 	idUsername, taskUUID, err := parseTaskID(taskID)
@@ -61,10 +63,9 @@ func (tss *TaskStatusServiceImpl) UpdateTaskStatus(username string, taskID strin
 		log.Println("Not Authorized")
 		return errors.New(NotAuthorized)
 	}
-	qkey := getQueryKey(username, taskUUID)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err = tss.tr.SetTaskState(ctx, qkey, status, 12*time.Hour)
+	err = tss.tr.SetTaskState(ctx, idUsername, taskUUID, status, 12*time.Hour)
 	if err != nil {
 		log.Printf("Error handling update: %v", err)
 		return errors.New(ErrorAccessingData)
@@ -72,8 +73,8 @@ func (tss *TaskStatusServiceImpl) UpdateTaskStatus(username string, taskID strin
 	return nil
 }
 
-// GetTaskStatus retrieves the status of a task for a given username and taskID.
-// Returns an integer status code and an error if any issues occur during execution.
+// GetTaskStatus retrieves the status of a specific task for a given username and task ID.
+// Returns the task status as an integer and an error if any occurs during the operation.
 func (tss *TaskStatusServiceImpl) GetTaskStatus(username string, taskID string) (int, error) {
 	idUsername, taskUUID, err := parseTaskID(taskID)
 	if err != nil {
@@ -84,10 +85,9 @@ func (tss *TaskStatusServiceImpl) GetTaskStatus(username string, taskID string) 
 		log.Println("Not Authorized")
 		return 0, errors.New(NotAuthorized)
 	}
-	qkey := getQueryKey(username, taskUUID)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	status, err := tss.tr.GetTaskState(ctx, qkey)
+	status, err := tss.tr.GetTaskState(ctx, idUsername, taskUUID)
 	if err != nil {
 		log.Printf("Error handling update: %v", err)
 		return 0, errors.New(ErrorAccessingData)
@@ -95,14 +95,13 @@ func (tss *TaskStatusServiceImpl) GetTaskStatus(username string, taskID string) 
 	return status, nil
 }
 
-// CreateNewTask generates a new task ID by combining the provided username with a newly generated UUID.
+// CreateNewTask generates a new task ID for the specified username, initializes its state, and returns the new task ID or an error.
 func (tss *TaskStatusServiceImpl) CreateNewTask(username string) (string, error) {
 	newId := uuid.New()
 	taskId := username + "-" + newId.String()
-	qKey := getQueryKey(username, newId.String())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err := tss.tr.SetTaskState(ctx, qKey, TaskReceived, 12*time.Hour)
+	err := tss.tr.SetTaskState(ctx, username, newId.String(), TaskReceived, 12*time.Hour)
 	if err != nil {
 		log.Printf("Error handling update: %v", err)
 		return "", errors.New(ErrorAccessingData)
@@ -110,7 +109,7 @@ func (tss *TaskStatusServiceImpl) CreateNewTask(username string) (string, error)
 	return taskId, nil
 }
 
-// parseTaskID splits the provided taskID string into username and task UUID. It returns an error if the format is invalid.
+// parseTaskID splits a task ID into its username and UUID components, returning an error if the format is invalid.
 func parseTaskID(taskID string) (string, string, error) {
 	elems := strings.Split(taskID, "-")
 	if len(elems) != 2 {
@@ -119,7 +118,14 @@ func parseTaskID(taskID string) (string, string, error) {
 	return elems[0], elems[1], nil
 }
 
-// getQueryKey generates a unique query key based on the username and the task UUID.
-func getQueryKey(username string, taskUUID string) string {
-	return "task" + ":" + username + ":" + taskUUID
+// GetAllTask fetches all tasks along with their status for the specified username and returns them as a map.
+func (tss *TaskStatusServiceImpl) GetAllTask(username string) (map[string]int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	allTasks, err := tss.tr.FetchAllTask(ctx, username)
+	if err != nil {
+		log.Printf("Error fetching all tasks: %v", err)
+		return nil, errors.New(ErrorAccessingData)
+	}
+	return allTasks, nil
 }
