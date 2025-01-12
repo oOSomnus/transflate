@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/redis/go-redis/v9" // Redis v9 Go library
 )
 
 type TaskRepository interface {
-	GetTaskState(ctx context.Context, uuid string) (int64, error)
-	SetTaskState(ctx context.Context, uuid string, state int64) error
+	GetTaskState(ctx context.Context, uuid string) (int, error)
+	SetTaskState(ctx context.Context, uuid string, state int, ttl time.Duration) error
 }
 
 type TaskRepositoryImpl struct {
@@ -22,8 +23,8 @@ func NewTaskRepository(client *redis.Client) *TaskRepositoryImpl {
 	return &TaskRepositoryImpl{redisClient: client}
 }
 
-// GetTaskState retrieves the integer state of a task from Redis by its UUID.
-func (t *TaskRepositoryImpl) GetTaskState(ctx context.Context, uuid string) (int64, error) {
+// GetTaskState retrieves the integer value of a task from Redis by its UUID.
+func (t *TaskRepositoryImpl) GetTaskState(ctx context.Context, uuid string) (int, error) {
 	val, err := t.redisClient.Get(ctx, uuid).Result()
 	if errors.Is(err, redis.Nil) {
 		return 0, errors.New("task state does not exist")
@@ -32,7 +33,7 @@ func (t *TaskRepositoryImpl) GetTaskState(ctx context.Context, uuid string) (int
 	}
 
 	// Convert the retrieved value to an integer
-	state, err := strconv.ParseInt(val, 10, 64)
+	state, err := strconv.Atoi(val)
 	if err != nil {
 		return 0, errors.New("failed to parse task state as an integer")
 	}
@@ -40,11 +41,17 @@ func (t *TaskRepositoryImpl) GetTaskState(ctx context.Context, uuid string) (int
 	return state, nil
 }
 
-// SetTaskState sets or updates the integer state of a task in Redis identified by its UUID.
-func (t *TaskRepositoryImpl) SetTaskState(ctx context.Context, uuid string, state int64) error {
-	err := t.redisClient.Set(ctx, uuid, state, 0).Err() // Setting TTL as 0 means no expiration
+func (t *TaskRepositoryImpl) SetTaskState(ctx context.Context, uuid string, state int, ttl time.Duration) error {
+	err := t.redisClient.SetNX(ctx, uuid, state, ttl).Err()
 	if err != nil {
-		return err
+		if !errors.Is(err, redis.Nil) {
+			return err
+		}
+		// Key exists, update the value
+		err = t.redisClient.Set(ctx, uuid, state, ttl).Err()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

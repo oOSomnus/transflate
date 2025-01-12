@@ -7,18 +7,20 @@ import (
 	"github.com/spf13/viper"
 )
 
+// RedisService defines methods for interacting with a Redis client and managing its lifecycle.
 type RedisService interface {
 	GetClient() *redis.Client
 	GetContext() context.Context
 	Close()
 }
 
-// RedisClient Impl
+// RedisClient represents a wrapper around *redis.Client and context.Context for interacting with a Redis database.
 type RedisClient struct {
 	client *redis.Client
 	ctx    context.Context
 }
 
+// NewRedisClient initializes a new RedisClient instance with connection details from configuration and tests the connection.
 func NewRedisClient() *RedisClient {
 	rdb := redis.NewClient(
 		&redis.Options{
@@ -39,14 +41,17 @@ func NewRedisClient() *RedisClient {
 	}
 }
 
+// GetClient returns the Redis client instance managed by the RedisClient structure.
 func (r *RedisClient) GetClient() *redis.Client {
 	return r.client
 }
 
+// GetContext returns the context associated with the RedisClient instance.
 func (r *RedisClient) GetContext() context.Context {
 	return r.ctx
 }
 
+// Close terminates the connection to the Redis server held by the RedisClient.
 func (r *RedisClient) Close() {
 	r.client.Close()
 }

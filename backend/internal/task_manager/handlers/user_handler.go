@@ -95,6 +95,21 @@ func (h *UserHandlerImpl) Register(c *gin.Context) {
 	}
 
 	if err := h.Usecase.CreateUser(userRequest.Username, userRequest.Password); err != nil {
+		// Hash the user's password before saving it to the database
+		hashedPassword, err := utils.HashPassword(userRequest.Password)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process password"})
+			log.Printf("Error: Failed to hash password for username %s: %v", userRequest.Username, err)
+			return
+		}
+
+		// Use the hashed password when creating the user
+		if err := h.Usecase.CreateUser(userRequest.Username, hashedPassword); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			log.Printf("Error: Failed to create user for username %s: %v", userRequest.Username, err)
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		log.Printf("Error: Failed to create user for username %s: %v", userRequest.Username, err)
 		return

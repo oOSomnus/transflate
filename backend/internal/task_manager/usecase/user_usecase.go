@@ -39,6 +39,7 @@ const (
 	ErrInvalidCredentials = "invalid username or password"
 	ErrUserAlreadyExists  = "user already exists"
 	ErrEmptyInput         = "username and password cannot be empty"
+	ErrInvalidRegInfo     = "invalid registration information"
 )
 
 // Authenticate verifies if the provided username and password are valid and returns a boolean and potential error.
@@ -67,6 +68,12 @@ func (u *UserUsecaseImpl) validatePassword(password, hashedPassword string) erro
 
 // CreateUser creates a new user with the provided username and password, ensuring valid input and uniqueness constraints.
 func (u *UserUsecaseImpl) CreateUser(username, password string) error {
+	if len(username) < 4 || len(username) > 15 {
+		return errors.New(ErrInvalidRegInfo)
+	}
+	if len(password) < 11 || len(password) > 18 {
+		return errors.New(ErrInvalidRegInfo)
+	}
 	if err := u.validateUserInput(username, password); err != nil {
 		return err
 	}
