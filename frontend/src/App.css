@@ -170,3 +170,78 @@ a:hover {
 .sidebar p {
     font-size: 12px; /* 减小剩余额度字体 */
 }
+
+/* 表格容器样式 */
+.task-table-container {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    margin: 20px auto;
+    width: 80%;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* 表格标题样式 */
+.task-table-container h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #4b3832;
+    text-align: center;
+}
+
+/* 表格样式 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 12px 15px;
+    border: 1px solid #d8b384;
+}
+
+th {
+    background-color: #d8b384;
+    color: #4b3832;
+    font-size: 16px;
+}
+
+td {
+    background-color: #fffaf0;
+    color: #4b3832;
+    font-size: 14px;
+}
+
+tr:nth-child(even) td {
+    background-color: #f5f5dc;
+}
+
+/* 下载按钮样式 */
+a.download-link {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #d8b384;
+    color: #4b3832;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+a.download-link:hover {
+    background: #a67c52;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(166, 124, 82, 0.5);
+}
+
+/* 提示文本 */
+.no-tasks {
+    text-align: center;
+    color: #4b3832;
+    font-size: 16px;
+    margin-top: 20px;
+}

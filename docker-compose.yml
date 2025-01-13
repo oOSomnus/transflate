@@ -43,6 +43,16 @@ services:
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - transflate
+  
+  redis:
+    image: redis:7
+    command: [ "redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes" ]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - transflate
 
   frontend:
     build:
@@ -56,6 +66,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   transflate:

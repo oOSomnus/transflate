@@ -61,7 +61,7 @@ func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 	}
 
 	log.Printf("Created new task with ID %s", taskId)
-	c.JSON(http.StatusOK, gin.H{"data": taskId})
+	c.JSON(http.StatusOK, gin.H{"data": "ok"})
 	go func() {
 		err = h.TaskStatusService.UpdateTaskStatus(usernameStr, taskId, service.Translating)
 		if err != nil {
