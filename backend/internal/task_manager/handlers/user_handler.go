@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/spf13/viper"
 	"log"
 	"net/http"
 
@@ -59,11 +60,14 @@ func (h *UserHandlerImpl) Login(c *gin.Context) {
 		return
 	}
 
-	if err := utils.VerifyTurnstileToken(userRequest.TurnstileToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": errTurnstileFailure})
-		return
+	needVerifyTurnstileToken := viper.GetBool("turnstile.verify")
+	if needVerifyTurnstileToken {
+		log.Println("Verifying turnstile token...")
+		if err := utils.VerifyTurnstileToken(userRequest.TurnstileToken); err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": errTurnstileFailure})
+			return
+		}
 	}
-
 	isAuthenticated, err := h.Usecase.Authenticate(userRequest.Username, userRequest.Password)
 	if err != nil || !isAuthenticated {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": errAuthFailure})

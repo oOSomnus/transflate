@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"sync"
+	"log"
 	"time"
 )
 
@@ -21,45 +21,45 @@ type OCRClient interface {
 
 // OCRService is a struct that manages gRPC connections and operations for the OCR service.
 type OCRService struct {
-	clientConn     *grpc.ClientConn
-	clientConnOnce sync.Once
-	clientConnErr  error
+	clientConn *grpc.ClientConn
+	grpcClient pb.OCRServiceClient
 }
 
 // NewOCRService initializes and returns a new instance of OCRService.
-func NewOCRService() *OCRService {
-	return &OCRService{}
+func NewOCRService() (*OCRService, error) {
+	service := &OCRService{}
+	err := service.getGRPCConn()
+	if err != nil {
+		log.Println("Error initializing OCR gRPC connection")
+		return nil, err
+	}
+	client := pb.NewOCRServiceClient(service.clientConn)
+	service.grpcClient = client
+	return service, nil
 }
 
-func (s *OCRService) getGRPCConn() (*grpc.ClientConn, error) {
+func (s *OCRService) getGRPCConn() error {
 	host := viper.GetString("ocr.host")
 	if host == "" {
-		return nil, fmt.Errorf("OCR service host is not configured")
+		return fmt.Errorf("OCR service host is not configured")
 	}
-
-	s.clientConnOnce.Do(
-		func() {
-			s.clientConn, s.clientConnErr = grpc.NewClient(
-				host+":50051",
-				grpc.WithTransportCredentials(insecure.NewCredentials()),
-			)
-		},
+	clientConn, clientConnErr := grpc.NewClient(
+		host+":50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
-
-	return s.clientConn, s.clientConnErr
+	if clientConnErr != nil {
+		log.Println("Error initializing OCR gRPC connection")
+		return clientConnErr
+	}
+	s.clientConn = clientConn
+	return nil
 }
 
 // ProcessOCR processes the given PDF file content using OCR and specified language, returning a structured response.
 func (s *OCRService) ProcessOCR(fileContent []byte, lang string) (*pb.StringListResponse, error) {
-	conn, err := s.getGRPCConn()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get gRPC connection: %w", err)
-	}
-
-	client := pb.NewOCRServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-
+	client := s.grpcClient
 	return client.ProcessPDF(
 		ctx, &pb.PDFRequest{
 			PdfData:  fileContent,

@@ -54,8 +54,9 @@ func main() {
 	redisClient := setupRedisClient()
 	defer redisClient.Close()
 
-	r := initializeServer(dbConnection, redisClient)
+	r, cleanup := initializeServer(dbConnection, redisClient)
 
+	defer cleanup()
 	log.Printf("Starting server on %s", defaultPort)
 	if err := r.Run(defaultPort); err != nil {
 		log.Fatal(err)
@@ -81,7 +82,7 @@ func setupRedisClient() *config.RedisClient {
 // It takes a database connection and a Redis client as parameters and returns the configured *gin.Engine.
 // The function sets trusted proxies, configures CORS, initializes services, and sets up routes for HTTP handling.
 // It also ensures proper resource cleanup for services upon termination.
-func initializeServer(db *sql.DB, redisClient *config.RedisClient) *gin.Engine {
+func initializeServer(db *sql.DB, redisClient *config.RedisClient) (*gin.Engine, func()) {
 	gin.SetMode(viper.GetString("gin.mode"))
 	verifyDatabaseCredentials()
 
@@ -98,8 +99,6 @@ func initializeServer(db *sql.DB, redisClient *config.RedisClient) *gin.Engine {
 	userHandler := handlers.NewUserHandler(usecase.NewUserUsecase(userRepo))
 	s3Service, ocrService, translateService := initializeServices()
 
-	defer cleanupServiceResources(ocrService, translateService)
-
 	taskStatusService := service.NewTaskStatusService(taskRepo)
 
 	taskUsecase := usecase.NewTaskUsecase(userRepo, taskRepo, ocrService, s3Service, translateService)
@@ -107,7 +106,10 @@ func initializeServer(db *sql.DB, redisClient *config.RedisClient) *gin.Engine {
 
 	setupRoutes(r, userHandler, taskHandler)
 
-	return r
+	cleanup := func() {
+		cleanupServiceResources(ocrService, translateService)
+	}
+	return r, cleanup
 }
 
 // initializeServices initializes and returns instances of S3StorageServiceImpl, OCRService, and TranslateServiceImpl.
@@ -116,13 +118,19 @@ func initializeServices() (service.S3StorageService, service.OCRClient, service.
 	s3Service, err := service.NewS3StorageService()
 	if err != nil {
 		log.Fatalf("S3 service initialization failed: %v", err)
+		return nil, nil, nil
 	}
 
-	ocrService := service.NewOCRService()
+	ocrService, err := service.NewOCRService()
+	if err != nil {
+		log.Fatalf("OCR service initialization failed: %v", err)
+		return nil, nil, nil
+	}
 
 	translateService, err := service.NewTranslateService()
 	if err != nil {
 		log.Fatalf("Translate service initialization failed: %v", err)
+		return nil, nil, nil
 	}
 
 	return s3Service, ocrService, translateService
@@ -174,7 +182,7 @@ func setupRoutes(r *gin.Engine, userHandler *handlers.UserHandlerImpl, taskHandl
 	auth.Use(middleware.AuthMiddleware())
 	auth.POST("/submit", taskHandler.TaskSubmit)
 	auth.GET("/user/info", userHandler.Info)
-
+	auth.GET("/tasks", taskHandler.TaskStatusCheckHandler)
 }
 
 // verifyDatabaseCredentials ensures the presence of database username and password in the application configuration.
