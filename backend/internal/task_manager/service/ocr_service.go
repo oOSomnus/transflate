@@ -57,7 +57,7 @@ func (s *OCRService) getGRPCConn() error {
 
 // ProcessOCR processes the given PDF file content using OCR and specified language, returning a structured response.
 func (s *OCRService) ProcessOCR(fileContent []byte, lang string) (*pb.StringListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 	client := s.grpcClient
 	return client.ProcessPDF(

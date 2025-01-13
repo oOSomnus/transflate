@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {uploadPDF} from '../api';
+import {fetchUserInfo, uploadPDF} from '../api';
 import {logout} from "../utils";
 
 const Translate = () => {
@@ -46,6 +46,18 @@ const Translate = () => {
         }
     };
 
+    const toggleSidebar = async () => {
+        setIsSidebarVisible(!isSidebarVisible);
+        if (!isSidebarVisible) {
+            try {
+                const response = await fetchUserInfo();
+                setUserInfo({username: response.data.username, balance: response.data.balance});
+            } catch (error) {
+                console.error('Failed to fetch user info:', error);
+            }
+        }
+    };
+
     return (
         <div style={{position: 'relative'}}>
             <form onSubmit={handleUpload}>
@@ -83,7 +95,16 @@ const Translate = () => {
             <div style={{marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px'}}>
                 <button onClick={handleLogout}>Logout</button>
                 <button onClick={() => navigate('/tasks')}>View Tasks</button>
+                <button onClick={toggleSidebar} className="user-info-button">User Info</button>
             </div>
+
+            {isSidebarVisible && (
+                <div className="sidebar">
+                    <h3>User Info</h3>
+                    <p>Username: {userInfo.username}</p>
+                    <p>Balance: {userInfo.balance}</p>
+                </div>
+            )}
         </div>
     );
 };
