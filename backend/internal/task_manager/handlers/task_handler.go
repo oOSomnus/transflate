@@ -11,29 +11,32 @@ import (
 	"path/filepath"
 )
 
-// init sets logging configuration with timestamp, microseconds precision, and a prefix for task handler logs.
+// init initializes the log package with specific flags and a custom prefix for task handler logging.
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	log.SetPrefix("[Task handler] ")
 }
 
-// TaskHandler defines an interface for handling task-related operations, including task submission through HTTP context.
+// TaskHandler defines an interface for handling task-related operations.
+// TaskSubmit processes the submission of a task from the request context.
+// TaskStatusCheckHandler retrieves the status of a task based on the request context.
 type TaskHandler interface {
 	TaskSubmit(c *gin.Context)
+	TaskStatusCheckHandler(c *gin.Context)
 }
 
-// TaskHandlerImpl is a struct that implements task-related HTTP handlers by leveraging the TaskUsecase interface.
+// TaskHandlerImpl handles task-related operations, connecting the use case and task status service layers.
 type TaskHandlerImpl struct {
 	Usecase           usecase.TaskUsecase
 	TaskStatusService service.TaskStatusService
 }
 
-// NewTaskHandler creates and returns a new instance of TaskHandlerImpl with the provided TaskUsecase instance.
+// NewTaskHandler initializes and returns a new instance of TaskHandlerImpl with the provided usecase and service.
 func NewTaskHandler(u usecase.TaskUsecase, tss service.TaskStatusService) *TaskHandlerImpl {
 	return &TaskHandlerImpl{Usecase: u, TaskStatusService: tss}
 }
 
-// TaskSubmit handles task submission by processing an uploaded file, performing OCR and translation, and returning a download link.
+// TaskSubmit handles the submission of a task, including file upload, processing, status updates, and download link generation.
 func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 	log.Println("Processing new task submission...")
 
@@ -94,15 +97,15 @@ func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 		return
 	}
 
-	if err = h.TaskStatusService.UpdateTaskDownloadLink(usernameStr, taskId, downLink); err != nil {
+	if err = h.TaskStatusService.UpdateTaskDownloadLink(taskId, downLink); err != nil {
 		log.Printf("Error updating task download link: %v", err)
 		handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
 		return
 	}
 }
 
-// getAuthenticatedUsername retrieves the username of the authenticated user from the given Gin context.
-// It returns an error if the username is not found or is of an invalid type.
+// getAuthenticatedUsername retrieves the authenticated username from the given context.
+// Returns an error if the username is not found or is of an invalid type.
 func getAuthenticatedUsername(c *gin.Context) (string, error) {
 	username, exists := c.Get("username")
 	if !exists {
@@ -115,8 +118,7 @@ func getAuthenticatedUsername(c *gin.Context) (string, error) {
 	return usernameStr, nil
 }
 
-// handleFileUpload processes a file upload from a gin.Context and only accepts PDF files, returning its content as a byte slice.
-// Returns an error if the uploaded file is invalid, not a PDF, or if reading the file content fails.
+// handleFileUpload extracts a PDF file from the request, validates its type, and returns its content as a byte slice.
 func handleFileUpload(c *gin.Context) ([]byte, error) {
 	file, err := c.FormFile("document")
 	if err != nil {
@@ -134,16 +136,36 @@ func handleFileUpload(c *gin.Context) ([]byte, error) {
 	return fileContent, nil
 }
 
-// handleError sends a JSON response with a given HTTP status code and error message, and logs the error message.
+// handleError sends a JSON error response with the given HTTP status code and message, and logs the error message.
 func handleError(c *gin.Context, statusCode int, message string) {
 	log.Println(message)
 	c.JSON(statusCode, gin.H{"error": message})
 }
 
+// handleTaskStatusError updates the task status to error state and logs any error encountered during the update process.
 func handleTaskStatusError(username string, taskId string, taskHandler service.TaskStatusService) {
 	err := taskHandler.UpdateTaskStatus(username, taskId, service.Error)
 	if err != nil {
 		log.Printf("Error updating task status: %v", err)
 		return
 	}
+}
+
+// TaskStatusCheckHandler handles the retrieval of all tasks for an authenticated user and returns the results as JSON.
+// Responds with 401 if the user is unauthorized or 500 if there is an error retrieving the tasks.
+// If successful, responds with 200 and the task data in the response body.
+func (h *TaskHandlerImpl) TaskStatusCheckHandler(c *gin.Context) {
+	log.Println("Processing Task Status Check...")
+
+	usernameStr, err := getAuthenticatedUsername(c)
+	if err != nil {
+		handleError(c, http.StatusUnauthorized, "User not authorized to submit task")
+		return
+	}
+	results, err := h.TaskStatusService.GetAllTask(usernameStr)
+	if err != nil {
+		log.Printf("Error getting all task: %v", err)
+		handleError(c, http.StatusInternalServerError, "Failed to get all task")
+	}
+	c.JSON(http.StatusOK, gin.H{"data": results})
 }

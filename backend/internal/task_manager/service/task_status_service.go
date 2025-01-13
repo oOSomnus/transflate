@@ -12,11 +12,11 @@ import (
 
 // TaskStatusService provides methods to manage and query the status of tasks, including updating, retrieving, and creating tasks.
 type TaskStatusService interface {
-	UpdateTaskStatus(string, string, int) error
-	GetTaskStatus(string, string) (int, error)
-	CreateNewTask(string) (string, error)
-	GetAllTask(string) (map[string]map[string]interface{}, error)
-	UpdateTaskDownloadLink(string, string, string) error
+	UpdateTaskStatus(username string, taskId string, status int) error
+	GetTaskStatus(username string, taskId string) (int, error)
+	CreateNewTask(username string) (string, error)
+	GetAllTask(username string) (map[string]map[string]interface{}, error)
+	UpdateTaskDownloadLink(taskId string, name string) error
 }
 
 // TaskStatusServiceImpl provides methods to manage task states via a TaskRepository.
@@ -112,11 +112,11 @@ func (tss *TaskStatusServiceImpl) CreateNewTask(username string) (string, error)
 
 // parseTaskID splits a task ID into its username and UUID components, returning an error if the format is invalid.
 func parseTaskID(taskID string) (string, string, error) {
-	elems := strings.Split(taskID, "-")
-	if len(elems) != 2 {
+	index := strings.Index(taskID, "-")
+	if index == -1 {
 		return "", "", errors.New(InvalidTaskId)
 	}
-	return elems[0], elems[1], nil
+	return taskID[:index], taskID[index+1:], nil
 }
 
 // GetAllTask fetches all tasks along with their status for the specified username and returns them as a map.
@@ -132,10 +132,15 @@ func (tss *TaskStatusServiceImpl) GetAllTask(username string) (map[string]map[st
 }
 
 // UpdateTaskDownloadLink updates the download link of a specific task for the given username and task ID. Returns an error if failed.
-func (tss *TaskStatusServiceImpl) UpdateTaskDownloadLink(username string, taskID string, link string) error {
+func (tss *TaskStatusServiceImpl) UpdateTaskDownloadLink(taskID string, link string) error {
+	idUsername, taskUUID, err := parseTaskID(taskID)
+	if err != nil {
+		log.Printf("error parsing task id: %v", err)
+		return err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := tss.tr.UpdateTaskLink(ctx, username, taskID, link); err != nil {
+	if err := tss.tr.UpdateTaskLink(ctx, idUsername, taskUUID, link); err != nil {
 		log.Printf("Error updating task link: %v", err)
 		return errors.New(ErrorAccessingData)
 	}
