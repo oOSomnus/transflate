@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { uploadPDF, fetchUserInfo } from '../api';
-import { logout} from "../utils";
+import React, {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {uploadPDF} from '../api';
+import {logout} from "../utils";
 
 const Translate = () => {
     const [file, setFile] = useState(null);
-    const [lang, setLang] = useState('eng'); // 选择语言
-    const [downloadLink, setDownloadLink] = useState(''); // 服务端返回的文件链接
-    const [isLoading, setIsLoading] = useState(false); // 是否加载中
-    const [isSidebarVisible, setIsSidebarVisible] = useState(false); // 控制侧边栏显示
-    const [userInfo, setUserInfo] = useState({ username: '', balance: 0 }); // 用户信息
+    const [lang, setLang] = useState('eng');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+    const [userInfo, setUserInfo] = useState({username: '', balance: 0});
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -32,35 +31,18 @@ const Translate = () => {
         setIsLoading(true);
 
         try {
-            const { data } = await uploadPDF(formData);
-            setDownloadLink(data.data);
-        } catch (error) {
-            if (error.response) {
-                if (error.response.status === 401) {
-                    alert('Unauthorized, please sign in');
-                    navigate('/login');
-                } else if (error.response.data && error.response.data.error) {
-                    alert(`Upload failed: ${error.response.data.error}`);
-                } else {
-                    alert('Upload failed: An unknown error occurred.');
-                }
+            const response = await uploadPDF(formData);
+            if (response.status === 200) {
+                alert('Submit successfully. You can view the task status on the task page.');
+            } else if (response.data && response.data.error) {
+                alert(`Error: ${response.data.error}`);
             } else {
-                alert('Upload failed: Unable to connect to the server.');
+                alert('Unexpected response from server.');
             }
+        } catch (error) {
+            alert('Upload failed: Unable to connect to the server.');
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const toggleSidebar = async () => {
-        setIsSidebarVisible(!isSidebarVisible);
-        if (!isSidebarVisible) {
-            try {
-                const response = await fetchUserInfo();
-                setUserInfo({username: response.data.username, balance: response.data.balance});
-            } catch (error) {
-                console.error('Failed to get user information', error);
-            }
         }
     };
 
@@ -96,28 +78,12 @@ const Translate = () => {
                     {isLoading ? 'Processing...' : 'Submit'}
                 </button>
                 {isLoading && <p>Processing, please wait</p>}
-                {downloadLink && (
-                    <div>
-                        <p>翻译完成！</p>
-                        <a href={downloadLink} target="_blank" rel="noopener noreferrer">下载翻译文件</a>
-                    </div>
-                )}
             </form>
 
             <div style={{marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px'}}>
                 <button onClick={handleLogout}>Logout</button>
-                <button className="user-info-button" onClick={toggleSidebar}>
-                    User Info
-                </button>
+                <button onClick={() => navigate('/tasks')}>View Tasks</button>
             </div>
-            {/* 侧边栏 */}
-            {isSidebarVisible && (
-                <div>
-                    <h3>User Info</h3>
-                    <p>Username: {userInfo.username}</p>
-                    <p>Remaining Page Credit: {userInfo.balance}</p>
-                </div>
-            )}
         </div>
     );
 };

@@ -1,79 +1,104 @@
 package handlers
 
 import (
+	"github.com/spf13/viper"
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/internal/task_manager/domain"
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
-	"log"
-	"net/http"
 )
 
-/*
-Login handles user login by authenticating credentials and generating a JWT token.
+const (
+	errInvalidRequest     = "Invalid request"
+	errTurnstileFailure   = "Turnstile token verification failed"
+	errAuthFailure        = "Failed to authenticate, please check the user information"
+	errTokenGeneration    = "Failed to generate token"
+	errUserUnauthorized   = "User unauthorized"
+	errInvalidUsername    = "Invalid username"
+	errBalanceCheckFailed = "Error checking balance"
+)
 
-Parameters:
-  - c (*gin.Context): The Gin context containing the HTTP request and response objects.
+// UserHandler defines methods for handling user-related HTTP requests.
+// Login handles user authentication requests.
+// Register handles user registration requests.
+// Info retrieves information about the authenticated user.
+type UserHandler interface {
+	Login(c *gin.Context)
+	Register(c *gin.Context)
+	Info(c *gin.Context)
+}
 
-Returns:
-  - Responds directly to the HTTP client with appropriate status codes and messages based on the operation's success or failure.
-*/
+// UserHandlerImpl handles HTTP requests related to user operations, delegating logic to the associated UserUsecase.
+type UserHandlerImpl struct {
+	Usecase usecase.UserUsecase
+}
 
-func Login(c *gin.Context) {
-	var req domain.UserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+// NewUserHandler initializes and returns a new instance of UserHandlerImpl with the provided UserUsecase.
+func NewUserHandler(u usecase.UserUsecase) *UserHandlerImpl {
+	return &UserHandlerImpl{Usecase: u}
+}
+
+// bindJSONAndValidate binds JSON data from the request to a specified struct and validates it.
+// Returns false if binding or validation fails, with a corresponding HTTP 400 response.
+// Returns true if the process succeeds without errors.
+func (h *UserHandlerImpl) bindJSONAndValidate(c *gin.Context, req interface{}) bool {
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errInvalidRequest})
+		return false
+	}
+	return true
+}
+
+// Login handles user login requests by validating credentials and generating a JWT token upon successful authentication.
+func (h *UserHandlerImpl) Login(c *gin.Context) {
+	var userRequest domain.UserRequest
+
+	if !h.bindJSONAndValidate(c, &userRequest) {
 		return
 	}
 
-	// Verify turnstile
-	turnstileToken := req.TurnstileToken
-	if turnstileToken == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid request"})
-		return
+	needVerifyTurnstileToken := viper.GetBool("turnstile.verify")
+	if needVerifyTurnstileToken {
+		log.Println("Verifying turnstile token...")
+		if err := utils.VerifyTurnstileToken(userRequest.TurnstileToken); err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": errTurnstileFailure})
+			return
+		}
 	}
-	if err := utils.VerifyTurnstileToken(turnstileToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Turnstile token verification failed"})
-	}
-	isAuthenticated, err := usecase.Authenticate(req.Username, req.Password)
-	if !isAuthenticated {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	isAuthenticated, err := h.Usecase.Authenticate(userRequest.Username, userRequest.Password)
+	if err != nil || !isAuthenticated {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": errAuthFailure})
 		return
 	}
 
-	// Generate JWT Token
-	token, err := utils.GenerateToken(req.Username)
+	token, err := utils.GenerateToken(userRequest.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errTokenGeneration})
 		return
 	}
 
 	c.JSON(
 		http.StatusOK, gin.H{
 			"message":  "Login successful",
-			"username": req.Username,
+			"username": userRequest.Username,
 			"token":    token,
 		},
 	)
 }
 
-/*
-Register handles the HTTP request to register a new user.
-
-Parameters:
-  - c (*gin.Context): The context of the current HTTP request, providing request and response handling.
-
-Returns:
-  - (JSON): A success or error message depending on the outcome.
-*/
-func Register(c *gin.Context) {
+func (h *UserHandlerImpl) Register(c *gin.Context) {
 	var req domain.UserRequest
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		log.Println("Error: Invalid request")
 		return
 	}
-	err := usecase.CreateUser(req.Username, req.Password)
+
+	err := h.Usecase.CreateUser(req.Username, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		log.Println("Error: Failed to create user")
@@ -86,24 +111,27 @@ func Register(c *gin.Context) {
 	)
 }
 
-func Info(c *gin.Context) {
-	log.Println("Getting user info ...")
+// Info handles authenticated requests to retrieve user information, including username and account balance.
+func (h *UserHandlerImpl) Info(c *gin.Context) {
 	username, exists := c.Get("username")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": errUserUnauthorized})
+		return
 	}
+
 	usernameStr, ok := username.(string)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": errInvalidUsername})
+		return
 	}
-	balance, err := usecase.CheckBalance(usernameStr)
+
+	balance, err := h.Usecase.CheckBalance(usernameStr)
 	if err != nil {
-		c.JSON(
-			http.StatusBadRequest, gin.H{
-				"error": "Error checking balance",
-			},
-		)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errBalanceCheckFailed})
+		log.Printf("Error: Failed to check balance for username %s: %v", usernameStr, err)
+		return
 	}
+
 	c.JSON(
 		http.StatusOK, gin.H{
 			"username": usernameStr,

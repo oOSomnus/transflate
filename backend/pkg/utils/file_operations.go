@@ -7,16 +7,7 @@ import (
 	"mime/multipart"
 )
 
-/*
-OpenFile reads the contents of a given multipart file header into a byte slice.
-
-Parameters:
-  - file (*multipart.FileHeader): The multipart file header to open and read.
-
-Returns:
-  - ([]byte): A byte slice containing the file's contents.
-  - (error): An error if the file cannot be opened, read, or closed properly.
-*/
+// OpenFile reads the contents of a multipart file and returns it as a byte slice. It closes the file after reading.
 func OpenFile(file *multipart.FileHeader) ([]byte, error) {
 	src, err := file.Open()
 	if err != nil {

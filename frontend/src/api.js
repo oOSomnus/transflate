@@ -2,7 +2,7 @@ import axios from 'axios';
 import {getToken} from "./utils";
 
 const API = axios.create({
-    baseURL: process.env.REACT_APP_TRANSFLATE_BACKEND_BASEURL || "/api"
+    baseURL: process.env.REACT_APP_TRANSFLATE_BACKEND_BASEURL || "http://localhost:8080"
 });
 
 API.interceptors.request.use((config) => {
@@ -40,4 +40,13 @@ export const fetchUserInfo = async () => {
        console.error(e);
        throw e;
    }
+};
+
+export const fetchTasks = async () => {
+    try {
+        return await API.get('/tasks');
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
 };

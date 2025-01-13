@@ -1,134 +1,173 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/oOSomnus/transflate/internal/task_manager/service"
 	"github.com/oOSomnus/transflate/internal/task_manager/usecase"
 	"github.com/oOSomnus/transflate/pkg/utils"
-	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
-	"time"
 )
 
+// init initializes the log package with specific flags and a custom prefix for task handler logging.
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	log.SetPrefix("[Task handler] ")
 }
 
-/*
-TaskSubmit handles the task submission process, including PDF file validation, OCR processing, token balance deduction, and text translation.
-
-Parameters:
-  - c (*gin.Context): The HTTP context that contains the request and response writer.
-
-Responses:
-  - 200 OK: Returns the translated text as JSON.
-  - 400 Bad Request: If the uploaded file is invalid or not a PDF.
-  - 401 Unauthorized: If the user is not logged in.
-  - 500 Internal Server Error: For errors during file reading, gRPC communication, token deduction, or other server-side issues.
-*/
-func TaskSubmit(c *gin.Context) {
-	// Check login status
-	log.Println("Received new task.")
-	username, exists := c.Get("username")
-	usernameStr, ok := username.(string)
-	log.Println("Validating information ...")
-	if !ok {
-		c.JSON(
-			http.StatusInternalServerError, gin.H{
-				"error": "Invalid username",
-			},
-		)
-		return
-	}
-	if !exists {
-		c.JSON(
-			http.StatusUnauthorized, gin.H{
-				"error": "User not authorized to submit task",
-			},
-		)
-		return
-	}
-	file, err := c.FormFile("document")
-	if err != nil {
-		c.JSON(
-			http.StatusBadRequest, gin.H{
-				"error": "Document invalid",
-			},
-		)
-		return
-	}
-	//check whether it's pdf
-	if filepath.Ext(file.Filename) != ".pdf" {
-		log.Println("File extension not pdf")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Only PDF files are allowed"})
-		return
-	}
-	// Open the uploaded file
-	fileContent, err := utils.OpenFile(file)
-	if err != nil {
-		log.Printf("Error opening file: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse file"})
-	}
-	lang := c.DefaultPostForm("lang", "eng")
-
-	transResponse, err := usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
-	if err != nil {
-		log.Printf("Error processing OCR: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to process OCR"})
-	}
-	//log.Printf("transresponse: %s", transResponse)
-
-	downLink, err := CreateDownloadLinkWithMdString(transResponse)
-	//covert md into html
-	if err != nil {
-		log.Fatalf("Failed to create download link: %v", err)
-	}
-	c.JSON(
-		http.StatusOK, gin.H{
-			"data": downLink,
-		},
-	)
+// TaskHandler defines an interface for handling task-related operations.
+// TaskSubmit processes the submission of a task from the request context.
+// TaskStatusCheckHandler retrieves the status of a task based on the request context.
+type TaskHandler interface {
+	TaskSubmit(c *gin.Context)
+	TaskStatusCheckHandler(c *gin.Context)
 }
 
-/*
-CreateDownloadLinkWithMdString generates a downloadable link for a PDF file created from a Markdown string.
+// TaskHandlerImpl handles task-related operations, connecting the use case and task status service layers.
+type TaskHandlerImpl struct {
+	Usecase           usecase.TaskUsecase
+	TaskStatusService service.TaskStatusService
+}
 
-Parameters:
-  - mdString (string): The input Markdown content to be converted into a PDF.
+// NewTaskHandler initializes and returns a new instance of TaskHandlerImpl with the provided usecase and service.
+func NewTaskHandler(u usecase.TaskUsecase, tss service.TaskStatusService) *TaskHandlerImpl {
+	return &TaskHandlerImpl{Usecase: u, TaskStatusService: tss}
+}
 
-Returns:
-  - (string): A presigned URL for downloading the generated PDF file.
-  - (error): An error if the process of creating the file, converting the Markdown, or generating the link fails.
-*/
-func CreateDownloadLinkWithMdString(mdString string) (string, error) {
-	//utils.LoadEnv()
-	bucketName := viper.GetString("s3.bucket.name")
-	mdTmpFile, err := os.CreateTemp("", "respMd-*.md")
+// TaskSubmit handles the submission of a task, including file upload, processing, status updates, and download link generation.
+func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
+	log.Println("Processing new task submission...")
+
+	usernameStr, err := getAuthenticatedUsername(c)
 	if err != nil {
-		log.Fatalln(errors.Wrap(err, "Error creating temp file"))
+		handleError(c, http.StatusUnauthorized, "User not authorized to submit task")
+		return
 	}
-	defer func(name string) {
-		err := os.Remove(name)
+
+	fileContent, err := handleFileUpload(c)
+	if err != nil {
+		handleError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	lang := c.DefaultPostForm("lang", "eng")
+
+	taskId, err := h.TaskStatusService.CreateNewTask(usernameStr)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to create new task")
+		return
+	}
+
+	log.Printf("Created new task with ID %s", taskId)
+	c.JSON(http.StatusOK, gin.H{"data": "ok"})
+	go func() {
+		err = h.TaskStatusService.UpdateTaskStatus(usernameStr, taskId, service.Translating)
 		if err != nil {
-			log.Fatalln(errors.Wrapf(err, "Failed to remove file: %s", name))
+			log.Printf(
+				"Error updating task status: %v", err,
+			)
+			handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+			return
 		}
-	}(mdTmpFile.Name())
-	_, err = mdTmpFile.Write([]byte(mdString))
-	if err != nil {
-		log.Fatalln(errors.Wrap(err, "Error writing to temp file"))
+		// Process OCR and Translation
+		transResponse, err := h.Usecase.ProcessOCRAndTranslate(usernameStr, fileContent, lang)
+		if err != nil {
+			log.Printf("Error processing OCR and translation: %v", err)
+			handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+			return
+		}
+		err = h.TaskStatusService.UpdateTaskStatus(usernameStr, taskId, service.Uploading)
+		if err != nil {
+			log.Printf("Error updating task status: %v", err)
+			handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+			return
+		}
+		// Create download link
+		downLink, err := h.Usecase.CreateDownloadLinkWithMdString(transResponse)
+		if err != nil {
+			log.Printf("Error generating download link: %v", err)
+			handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+			return
+		}
+		err = h.TaskStatusService.UpdateTaskStatus(usernameStr, taskId, service.Done)
+		if err != nil {
+			log.Printf("Error updating task status: %v", err)
+			handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+			return
+		}
+
+		if err = h.TaskStatusService.UpdateTaskDownloadLink(taskId, downLink); err != nil {
+			log.Printf("Error updating task download link: %v", err)
+			handleTaskStatusError(usernameStr, taskId, h.TaskStatusService)
+			return
+		}
+	}()
+}
+
+// getAuthenticatedUsername retrieves the authenticated username from the given context.
+// Returns an error if the username is not found or is of an invalid type.
+func getAuthenticatedUsername(c *gin.Context) (string, error) {
+	username, exists := c.Get("username")
+	if !exists {
+		return "", fmt.Errorf("username not found")
 	}
-	err = service.UploadFileToS3(bucketName, "mds/"+filepath.Base(mdTmpFile.Name()), mdTmpFile.Name(), 1)
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to upload file")
+	usernameStr, ok := username.(string)
+	if !ok {
+		return "", fmt.Errorf("invalid username type")
 	}
-	downLink, err := service.GeneratePresignedURL(bucketName, "mds/"+filepath.Base(mdTmpFile.Name()), time.Hour)
+	return usernameStr, nil
+}
+
+// handleFileUpload extracts a PDF file from the request, validates its type, and returns its content as a byte slice.
+func handleFileUpload(c *gin.Context) ([]byte, error) {
+	file, err := c.FormFile("document")
 	if err != nil {
-		return "", errors.Wrap(err, "Failed to generate presigned url")
+		return nil, fmt.Errorf("invalid document")
 	}
-	return downLink, nil
+
+	if filepath.Ext(file.Filename) != ".pdf" {
+		return nil, fmt.Errorf("only PDF files are allowed")
+	}
+
+	fileContent, err := utils.OpenFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file content")
+	}
+	return fileContent, nil
+}
+
+// handleError sends a JSON error response with the given HTTP status code and message, and logs the error message.
+func handleError(c *gin.Context, statusCode int, message string) {
+	log.Println(message)
+	c.JSON(statusCode, gin.H{"error": message})
+}
+
+// handleTaskStatusError updates the task status to error state and logs any error encountered during the update process.
+func handleTaskStatusError(username string, taskId string, taskHandler service.TaskStatusService) {
+	err := taskHandler.UpdateTaskStatus(username, taskId, service.Error)
+	if err != nil {
+		log.Printf("Error updating task status: %v", err)
+		return
+	}
+}
+
+// TaskStatusCheckHandler handles the retrieval of all tasks for an authenticated user and returns the results as JSON.
+// Responds with 401 if the user is unauthorized or 500 if there is an error retrieving the tasks.
+// If successful, responds with 200 and the task data in the response body.
+func (h *TaskHandlerImpl) TaskStatusCheckHandler(c *gin.Context) {
+	log.Println("Processing Task Status Check...")
+
+	usernameStr, err := getAuthenticatedUsername(c)
+	if err != nil {
+		handleError(c, http.StatusUnauthorized, "User not authorized to submit task")
+		return
+	}
+	results, err := h.TaskStatusService.GetAllTask(usernameStr)
+	if err != nil {
+		log.Printf("Error getting all task: %v", err)
+		handleError(c, http.StatusInternalServerError, "Failed to get all task")
+	}
+	c.JSON(http.StatusOK, gin.H{"data": results})
 }

@@ -7,6 +7,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+// TurnstileResponse represents the response structure from Cloudflare's Turnstile verification endpoint.
+// Success indicates if the verification was successful.
+// ChallengeTS is the timestamp of the challenge completion in ISO 8601 format.
+// Hostname is the hostname of the website where the challenge originated.
+// ErrorCodes contains a list of error codes returned if the verification fails.
 type TurnstileResponse struct {
 	Success     bool     `json:"success"`
 	ChallengeTS string   `json:"challenge_ts"`
@@ -14,7 +19,8 @@ type TurnstileResponse struct {
 	ErrorCodes  []string `json:"error-codes"`
 }
 
-// 验证 Turnstile token
+// VerifyTurnstileToken validates a Cloudflare Turnstile token by sending a verification request to the Turnstile API.
+// Returns an error if the secret key is missing, the API request fails, or verification is unsuccessful.
 func VerifyTurnstileToken(token string) error {
 	secretKey := viper.GetString("cloudflare.turnstile-key")
 	if secretKey == "" {

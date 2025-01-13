@@ -6,21 +6,8 @@ import (
 	"os"
 )
 
-/*
-Deprecated: Switch to viper config
-
-LoadEnv loads environment variables from a .env file into the application.
-
-Behavior:
-  - Attempts to load variables from a .env file in the current working directory.
-  - Logs a fatal error and terminates the application if the .env file cannot be loaded.
-
-Parameters:
-  - None
-
-Returns:
-  - None
-*/
+// LoadEnv reads the environment variables from a .env file and loads them into the application's runtime environment.
+// It terminates the program with a fatal log if the .env file cannot be loaded.
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
@@ -28,20 +15,7 @@ func LoadEnv() {
 	}
 }
 
-/*
-Deprecated: Use viper.GetString instead
-
-GetEnv retrieves the value of an environment variable by its key.
-
-Parameters:
-  - key (string): The name of the environment variable to retrieve.
-
-Returns:
-  - (string): The value of the environment variable.
-
-Behavior:
-  - Logs a fatal error and terminates the application if the environment variable is not set.
-*/
+// GetEnv retrieves the value of the specified environment variable or logs a fatal error if it is not set.
 func GetEnv(key string) string {
 	value, exists := os.LookupEnv(key)
 	if !exists {

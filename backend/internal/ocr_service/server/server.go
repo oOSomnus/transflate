@@ -16,11 +16,14 @@ import (
 	"sync"
 )
 
+// init sets up the logger with specific flags and a prefix for the OCR Service.
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	log.SetPrefix("[OCR Service] ")
 }
 
+// extractPageNumber extracts the first numeric sequence from the given filename and returns it as an integer.
+// Returns -1 if no numeric sequence is found or if an error occurs during conversion.
 func extractPageNumber(filename string) int {
 	re := regexp.MustCompile(`\d+`)
 	match := re.FindString(filename)
@@ -34,27 +37,14 @@ func extractPageNumber(filename string) int {
 	return num
 }
 
-/*
-OCRServiceServer represents the server for the OCR (Optical Character Recognition) service.
-
-Embedded Struct:
-  - pb.UnimplementedOCRServiceServer: Embeds the unimplemented server methods to comply with gRPC server requirements.
-*/
+// OCRServiceServer is a gRPC server that processes PDF files and extracts OCR text data from them.
+// It embeds UnimplementedOCRServiceServer to provide forward compatibility for gRPC APIs.
 type OCRServiceServer struct {
 	pb.UnimplementedOCRServiceServer
 }
 
-/*
-ProcessPDF processes a PDF file, converts its pages to images using pdftoppm, and performs OCR on each page to extract text.
-
-Parameters:
-  - ctx (context.Context): The context for managing request-scoped values, deadlines, and cancellation signals.
-  - req (*pb.PDFRequest): The request containing the PDF data to be processed, provided as a byte array in `PdfData`.
-
-Returns:
-  - (*pb.StringListResponse): A response containing a list of strings where each string represents the OCR result for a corresponding page of the PDF.
-  - (error): An error if any issues occur during processing, such as file creation, image conversion, or OCR execution.
-*/
+// ProcessPDF handles a PDF processing request by converting it to images, performing OCR, and returning extracted text.
+// It utilizes temporary files, worker pools, and concurrency for efficiency. It returns the OCR result and page count.
 func (s *OCRServiceServer) ProcessPDF(ctx context.Context, req *pb.PDFRequest) (*pb.StringListResponse, error) {
 	// Create temp folder
 	log.Println("Received PDF Process request")

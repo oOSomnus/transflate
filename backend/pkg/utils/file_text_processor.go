@@ -5,17 +5,7 @@ import (
 	"strings"
 )
 
-/*
-SplitString splits a given string into chunks containing up to a specified maximum number of words.
-
-Parameters:
-  - s (string): The input string to be split.
-  - maxWords (int): The maximum number of words allowed in each chunk.
-
-Returns:
-  - ([]string): A slice of strings, where each string contains up to `maxWords` words from the input string.
-*/
-
+// SplitString splits a string into chunks with each chunk containing up to maxWords words and returns a slice of chunks.
 func SplitString(s string, maxWords int) []string {
 	words := strings.Fields(s)
 	var chunks []string
@@ -29,17 +19,8 @@ func SplitString(s string, maxWords int) []string {
 	return chunks
 }
 
-/*
-GetLastNWords extracts the last N words from the given input string.
-
-Parameters:
-  - input (string): The input string from which words are extracted.
-  - n (int): The number of words to extract from the end of the input string.
-
-Returns:
-  - (string): A string containing the last N words, or all words if N exceeds the total word count.
-*/
-
+// GetLastNWords extracts the last n words from the given input string and returns them as a single string.
+// If n is greater than or equal to the total number of words, the entire input string is returned.
 func GetLastNWords(input string, n int) string {
 	words := strings.Fields(input)
 	if n >= len(words) {
@@ -48,16 +29,19 @@ func GetLastNWords(input string, n int) string {
 	return strings.Join(words[len(words)-n:], " ")
 }
 
+// RemoveNonUnicodeCharacters removes non-Unicode characters from a given string and returns the cleaned string.
 func RemoveNonUnicodeCharacters(input string) string {
 	re := regexp.MustCompile(`[^\x{0000}-\x{10FFFF}]+`)
 	return re.ReplaceAllString(input, "")
 }
 
+// ReplaceMultipleSpaces replaces multiple consecutive spaces in the input string with a single space.
 func ReplaceMultipleSpaces(input string) string {
 	re := regexp.MustCompile(`\s{2,}`)
 	return re.ReplaceAllString(input, " ")
 }
 
+// TextCleaning processes a string by removing non-Unicode characters and replacing multiple spaces with a single space.
 func TextCleaning(str string) string {
 	str = RemoveNonUnicodeCharacters(str)
 	str = ReplaceMultipleSpaces(str)
