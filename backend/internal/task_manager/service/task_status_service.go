@@ -14,7 +14,7 @@ import (
 type TaskStatusService interface {
 	UpdateTaskStatus(username string, taskId string, status int) error
 	GetTaskStatus(username string, taskId string) (int, error)
-	CreateNewTask(username string) (string, error)
+	CreateNewTask(username string, filename string) (string, error)
 	GetAllTask(username string) (map[string]map[string]interface{}, error)
 	UpdateTaskDownloadLink(taskId string, name string) error
 }
@@ -66,7 +66,7 @@ func (tss *TaskStatusServiceImpl) UpdateTaskStatus(username string, taskID strin
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err = tss.tr.SetTaskState(ctx, idUsername, taskUUID, status, 12*time.Hour)
+	err = tss.tr.SetTaskState(ctx, idUsername, taskUUID, status, "", 12*time.Hour)
 	if err != nil {
 		log.Printf("Error handling update: %v", err)
 		return errors.New(ErrorAccessingData)
@@ -97,12 +97,12 @@ func (tss *TaskStatusServiceImpl) GetTaskStatus(username string, taskID string) 
 }
 
 // CreateNewTask generates a new task ID for the specified username, initializes its state, and returns the new task ID or an error.
-func (tss *TaskStatusServiceImpl) CreateNewTask(username string) (string, error) {
+func (tss *TaskStatusServiceImpl) CreateNewTask(username string, filename string) (string, error) {
 	newId := uuid.New()
 	taskId := username + "-" + newId.String()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err := tss.tr.SetTaskState(ctx, username, newId.String(), TaskReceived, 12*time.Hour)
+	err := tss.tr.SetTaskState(ctx, username, newId.String(), TaskReceived, filename, 12*time.Hour)
 	if err != nil {
 		log.Printf("Error handling update: %v", err)
 		return "", errors.New(ErrorAccessingData)

@@ -46,7 +46,7 @@ func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 		return
 	}
 
-	fileContent, err := handleFileUpload(c)
+	fileContent, fileName, err := handleFileUpload(c)
 	if err != nil {
 		handleError(c, http.StatusBadRequest, err.Error())
 		return
@@ -54,7 +54,7 @@ func (h *TaskHandlerImpl) TaskSubmit(c *gin.Context) {
 
 	lang := c.DefaultPostForm("lang", "eng")
 
-	taskId, err := h.TaskStatusService.CreateNewTask(usernameStr)
+	taskId, err := h.TaskStatusService.CreateNewTask(usernameStr, fileName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to create new task")
 		return
@@ -120,22 +120,23 @@ func getAuthenticatedUsername(c *gin.Context) (string, error) {
 	return usernameStr, nil
 }
 
-// handleFileUpload extracts a PDF file from the request, validates its type, and returns its content as a byte slice.
-func handleFileUpload(c *gin.Context) ([]byte, error) {
+// handleFileUpload processes a file upload from a multipart form, ensuring it is a valid PDF file and returns its content.
+// Returns an error if the file is missing, not a PDF, or fails during content reading.
+func handleFileUpload(c *gin.Context) ([]byte, string, error) {
 	file, err := c.FormFile("document")
 	if err != nil {
-		return nil, fmt.Errorf("invalid document")
+		return nil, "", fmt.Errorf("invalid document")
 	}
 
 	if filepath.Ext(file.Filename) != ".pdf" {
-		return nil, fmt.Errorf("only PDF files are allowed")
+		return nil, "", fmt.Errorf("only PDF files are allowed")
 	}
 
 	fileContent, err := utils.OpenFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file content")
+		return nil, "", fmt.Errorf("failed to read file content")
 	}
-	return fileContent, nil
+	return fileContent, file.Filename, nil
 }
 
 // handleError sends a JSON error response with the given HTTP status code and message, and logs the error message.

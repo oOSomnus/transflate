@@ -20,7 +20,8 @@ const TaskPage = () => {
         const loadTasks = async () => {
             try {
                 const response = await fetchTasks();
-                setTasks(Object.entries(response.data.data));
+                // 获取 tasks 数据并直接存储为值数组
+                setTasks(Object.values(response.data.data));
             } catch (error) {
                 alert('Failed to load tasks');
             }
@@ -48,15 +49,15 @@ const TaskPage = () => {
                 <table>
                     <thead>
                     <tr>
-                        <th>Task ID</th>
+                        <th>Filename</th>
                         <th>Status</th>
                         <th>Download</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {tasks.map(([taskId, task]) => (
-                        <tr key={taskId}>
-                            <td>{taskId}</td>
+                    {tasks.map((task, index) => (
+                        <tr key={index}>
+                            <td>{task.filename}</td>
                             <td>{statusMap[task.status] || 'Unknown Status'}</td>
                             <td>
                                 {task.link ? (
