@@ -7,6 +7,9 @@ import (
 
 // SplitString splits a string into chunks with each chunk containing up to maxWords words and returns a slice of chunks.
 func SplitString(s string, maxWords int) []string {
+	if len(s) <= maxWords {
+		return []string{s}
+	}
 	words := strings.Fields(s)
 	var chunks []string
 	for i := 0; i < len(words); i += maxWords {
