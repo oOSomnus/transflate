@@ -21,8 +21,8 @@ func TranslateText(longString string) (string, error) {
 	chunks := utils.SplitString(longString, maxWordsPerChunk)
 
 	// Initialize parallel processing workers
-	numWorkers := runtime.NumCPU() * 2
-	workersPool := make(chan struct{}, numWorkers)
+	maxNumTokens := max(runtime.NumCPU()*2, 10)
+	apiTokens := make(chan struct{}, maxNumTokens)
 
 	translatedChunks, translationErrors := initResults(len(chunks))
 
@@ -31,8 +31,7 @@ func TranslateText(longString string) (string, error) {
 
 	for i, chunk := range chunks {
 		wg.Add(1)
-		workersPool <- struct{}{}
-		go processChunk(i, chunks, chunk, translator, translatedChunks, translationErrors, workersPool, &wg)
+		go processChunk(i, chunks, chunk, translator, translatedChunks, translationErrors, apiTokens, &wg)
 	}
 
 	wg.Wait()
@@ -42,6 +41,8 @@ func TranslateText(longString string) (string, error) {
 	finalTranslation := strings.Join(translatedChunks, "\n")
 	return finalTranslation, nil
 }
+
+var mutex = &sync.Mutex{}
 
 // processChunk processes a single text chunk by translating it using the provided Translator and updates the results concurrently.
 // index specifies the position of the chunk in the chunks slice.
@@ -59,17 +60,18 @@ func processChunk(
 	translator domain.Translator,
 	translatedChunks []string,
 	translationErrors []error,
-	workersPool chan struct{},
+	apiTokens chan struct{},
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
-	defer func() { <-workersPool }() // 释放 worker
-
+	defer func() { <-apiTokens }() // 释放 worker
+	apiTokens <- struct{}{}
 	prevContext := getPreviousContext(index, chunks)
 	result, err := translator.Translate(prevContext, chunk)
-
+	mutex.Lock()
 	translatedChunks[index] = result
 	translationErrors[index] = err
+	mutex.Unlock()
 }
 
 // getPreviousContext returns the last N words from the previous chunk in the list, or an empty string if index is 0.

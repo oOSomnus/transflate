@@ -30,7 +30,7 @@ func NewGPTTranslator() *GPTTranslator {
 // prevContext provides optional reference data, while text represents the content to translate.
 // Returns the translated text in markdown format or an error if the translation request fails.
 func (g *GPTTranslator) Translate(prevContext, text string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
 	defer cancel()
 
 	chatCompletion, err := g.client.Chat.Completions.New(
@@ -39,14 +39,14 @@ func (g *GPTTranslator) Translate(prevContext, text string) (string, error) {
 			Messages: openai.F(
 				[]openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(
-						"You are a professional translator. Translate the following English text into Chinese. Ignore random characters or symbols, and focus on the meaningful content. Provide the result in markdown format. You don't need to translate the previous context.",
+						"You are a professional translator. Translate the following text into Chinese. Ignore random characters or symbols, and focus on the meaningful content. Provide the result in markdown format. You don't need to translate the previous context, and information doesn't related to the main text.",
 					),
 					openai.UserMessage("Previous context for reference: " + prevContext),
 					openai.UserMessage("Text to translate: " + text),
 				},
 			),
-			Model:               openai.F(openai.ChatModelGPT4Turbo),
-			MaxCompletionTokens: openai.Int(3000),
+			Model: openai.F(openai.ChatModelGPT4Turbo),
+			//MaxCompletionTokens: openai.Int(3000),
 		},
 	)
 	if err != nil {
