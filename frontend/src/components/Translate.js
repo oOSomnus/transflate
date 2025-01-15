@@ -35,7 +35,7 @@ const Translate = () => {
             if (response.status === 200) {
                 alert('Submit successfully. You can view the task status on the task page.');
             } else if (response.data && response.data.error) {
-                alert(`Error: ${response.data.error}`);
+                alert(`Error submitting task. Please check whether your balance is low or the file is not in pdf format.`);
             } else {
                 alert('Unexpected response from server.');
             }
