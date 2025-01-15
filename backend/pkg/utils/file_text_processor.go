@@ -3,6 +3,7 @@ package utils
 import (
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 // SplitString splits a string into chunks with each chunk containing up to maxWords words and returns a slice of chunks.
@@ -32,10 +33,16 @@ func GetLastNWords(input string, n int) string {
 	return strings.Join(words[len(words)-n:], " ")
 }
 
-// RemoveNonUnicodeCharacters removes non-Unicode characters from a given string and returns the cleaned string.
+// RemoveNonUnicodeCharacters removes invalid UTF-8 characters from the input string
 func RemoveNonUnicodeCharacters(input string) string {
-	re := regexp.MustCompile(`[^\x{0000}-\x{10FFFF}]+`)
-	return re.ReplaceAllString(input, "")
+	var output strings.Builder
+	for _, r := range input {
+		// Check if the rune is a valid Unicode code point
+		if r != utf8.RuneError {
+			output.WriteRune(r)
+		}
+	}
+	return output.String()
 }
 
 // ReplaceMultipleSpaces replaces multiple consecutive spaces in the input string with a single space.

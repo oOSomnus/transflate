@@ -57,7 +57,11 @@ const TaskPage = () => {
                     <tbody>
                     {tasks.map((task, index) => (
                         <tr key={index}>
-                            <td>{task.filename}</td>
+                            <td>
+                                {task.filename.length > 10
+                                    ? `${task.filename.substring(0, 10)}...`
+                                    : task.filename}
+                            </td>
                             <td>{statusMap[task.status] || 'Unknown Status'}</td>
                             <td>
                                 {task.link ? (
