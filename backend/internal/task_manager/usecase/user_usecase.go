@@ -71,16 +71,17 @@ func (u *UserUsecaseImpl) validatePassword(password, hashedPassword string) erro
 
 // CreateUser creates a new user with the provided username and password, ensuring valid input and uniqueness constraints.
 func (u *UserUsecaseImpl) CreateUser(username, password string) error {
+	if err := u.validateUserInput(username, password); err != nil {
+		log.Println("error validating user input")
+		return err
+	}
 	if len(username) < 4 || len(username) > 15 {
 		return errors.New(ErrInvalidRegInfo)
 	}
 	if len(password) < 11 || len(password) > 18 {
 		return errors.New(ErrInvalidRegInfo)
 	}
-	if err := u.validateUserInput(username, password); err != nil {
-		log.Println("error validating user input")
-		return errors.New(ErrInvalidUsrInput)
-	}
+
 	if exists, err := u.Repo.IfUserExists(username); err != nil {
 		return fmt.Errorf("failed to check user existence: %w", err)
 	} else if exists {

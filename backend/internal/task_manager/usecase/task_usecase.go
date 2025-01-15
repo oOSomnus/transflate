@@ -13,9 +13,6 @@ import (
 	"time"
 )
 
-// Placeholder for a const block, typically used for defining multiple constants.
-const ()
-
 // TaskUsecase defines methods for processing OCR and translations, as well as generating downloadable links from Markdown.
 type TaskUsecase interface {
 	ProcessOCRAndTranslate(username string, fileContent []byte, lang string) (string, error)

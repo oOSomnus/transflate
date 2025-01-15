@@ -12,8 +12,8 @@ import (
 // maxWordsPerChunk defines the maximum number of words allowed per chunk.
 // contextWordCount specifies the limit on the number of words for context.
 const (
-	maxWordsPerChunk = 2000 // 最大每块单词数
-	contextWordCount = 50   // 上下文单词限制
+	maxWordsPerChunk = 1000 // max num of words per chunk
+	contextWordCount = 50   // num of words provided as context
 )
 
 // TranslateText splits a long string into smaller chunks, translates each chunk in parallel, and returns the full translation.
