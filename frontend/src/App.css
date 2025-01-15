@@ -175,10 +175,12 @@ a:hover {
 .task-table-container {
     background: rgba(255, 255, 255, 0.9);
     padding: 20px;
+    /*max-width: 1200px;*/
     border-radius: 10px;
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     margin: 20px auto;
-    width: 80%;
+    width: 90%;
+    overflow: auto;
     font-family: 'Roboto', sans-serif;
 }
 
@@ -245,3 +247,28 @@ a.download-link:hover {
     font-size: 16px;
     margin-top: 20px;
 }
+
+td, th {
+    word-wrap: break-word;
+    white-space: normal; /* 允许自动换行 */
+}
+
+body {
+    font-size: 18px; /* 默认字体大小（原来可能是16px） */
+    line-height: 1.6; /* 增加行间距，增强可读性 */
+}
+
+th, td {
+    padding: 20px; /* 增大单元格间距 */
+    font-size: 1.1rem; /* 放大字体 */
+}
+
+th {
+    font-size: 1.3rem; /* 表头更大一点 */
+}
+
+
+
+
+
+
