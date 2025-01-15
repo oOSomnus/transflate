@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {fetchTasks} from '../api';
+import {Tooltip} from "react-tooltip";
 
 const TaskPage = () => {
     const [tasks, setTasks] = useState([]);
@@ -41,6 +42,7 @@ const TaskPage = () => {
     }, []);
 
     return (
+        <>
         <div className="task-table-container">
             <h2>Your Tasks</h2>
             {tasks.length === 0 ? (
@@ -87,8 +89,22 @@ const TaskPage = () => {
                     Back to Translate
                 </button>
             </div>
+
         </div>
-    );
+            <div className="more-info-container">
+                <span
+                    data-tooltip-id="info-tooltip"
+                    className="more-info"
+                >
+                    More Info
+                </span>
+                <Tooltip id="info-tooltip" place="top" type="dark" effect="solid">
+                    This page is automatically refreshed.
+                </Tooltip>
+        </div>
+        </>
+    )
+        ;
 };
 
 export default TaskPage;

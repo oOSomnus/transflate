@@ -107,22 +107,16 @@ const Translate = () => {
                 </div>
             )}
             <div className="more-info-container">
-    <span
-        data-tooltip-id="info-tooltip"
-        className="more-info"
-    >
-        More Info
-    </span>
+            <span
+                data-tooltip-id="info-tooltip"
+                className="more-info"
+            >
+                More Info
+            </span>
                 <Tooltip id="info-tooltip" place="top" type="dark" effect="solid">
-                    This page is automatically refreshed.
                     Please contact the administrator to obtain page credits.
                 </Tooltip>
             </div>
-
-
-
-
-
         </div>
     );
 };

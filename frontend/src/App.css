@@ -173,6 +173,8 @@ a:hover {
 
 /* 表格容器样式 */
 .task-table-container {
+    justify-content: center;
+    align-items: center;
     background: rgba(255, 255, 255, 0.9);
     padding: 20px;
     /*max-width: 1200px;*/
