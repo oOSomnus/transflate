@@ -39,7 +39,7 @@ func (g *GPTTranslator) Translate(prevContext, text string) (string, error) {
 			Messages: openai.F(
 				[]openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(
-						"You are a professional translator. Translate the following text into Chinese. Ignore random characters or symbols, and focus on the meaningful content. Provide the result in markdown format. You don't need to translate the previous context and information doesn't related to the main text.",
+						"You are a professional translator. Translate the following text into Chinese. Ignore random characters or symbols, and focus on the meaningful content. Provide the result in markdown format and try your best separating paragraphs. You don't need to translate the previous context.",
 					),
 					openai.UserMessage("Previous context for reference: " + prevContext),
 					openai.UserMessage("Text to translate: " + text),
