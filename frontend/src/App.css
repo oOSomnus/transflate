@@ -267,6 +267,33 @@ th {
     font-size: 1.3rem; /* 表头更大一点 */
 }
 
+.button-container {
+    display: flex;
+    justify-content: space-around; /* 等距分布按钮 */
+    margin-top: 20px;
+}
+
+.more-info-container {
+    display: flex;
+    justify-content: center; /* 居中对齐 */
+    margin-top: 5px; /* 与按钮容器的间距 */
+}
+
+.more-info {
+    font-size: 16px; /* 字体大小 */
+    color: #a67c52; /* 金棕色 */
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.more-info:hover {
+    color: #4b3832; /* 深棕色 */
+    text-decoration: underline;
+    transform: scale(1.1);
+}
+
+
+
 
 
 

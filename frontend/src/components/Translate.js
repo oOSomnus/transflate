@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {fetchUserInfo, uploadPDF} from '../api';
 import {logout} from "../utils";
+import {Tooltip} from 'react-tooltip';
 
 const Translate = () => {
     const [file, setFile] = useState(null);
@@ -92,12 +93,12 @@ const Translate = () => {
                 {isLoading && <p>Processing, please wait</p>}
             </form>
 
-            <div style={{marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px'}}>
+            <div className="button-container"
+                 style={{marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px'}}>
                 <button onClick={handleLogout}>Logout</button>
                 <button onClick={() => navigate('/tasks')}>View Tasks</button>
                 <button onClick={toggleSidebar} className="user-info-button">User Info</button>
             </div>
-
             {isSidebarVisible && (
                 <div className="sidebar">
                     <h3>User Info</h3>
@@ -105,6 +106,23 @@ const Translate = () => {
                     <p>Balance: {userInfo.balance}</p>
                 </div>
             )}
+            <div className="more-info-container">
+    <span
+        data-tooltip-id="info-tooltip"
+        className="more-info"
+    >
+        More Info
+    </span>
+                <Tooltip id="info-tooltip" place="top" type="dark" effect="solid">
+                    This page is automatically refreshed.
+                    Please contact the administrator to obtain page credits.
+                </Tooltip>
+            </div>
+
+
+
+
+
         </div>
     );
 };
