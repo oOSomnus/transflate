@@ -2,6 +2,8 @@
 
 A comprehensive platform integrating OCR and translation services, supporting multi-language text recognition and translation.
 
+Currently hosted on <https://translaterequest.com>
+
 ## Quick Start
 
 ### Prerequisites
