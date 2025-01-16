@@ -4,6 +4,10 @@ A comprehensive platform integrating OCR and translation services, supporting mu
 
 Currently hosted on <https://translaterequest.com>
 
+## Structure
+
+![structure](images/structure.png)
+
 ## Quick Start
 
 ### Prerequisites
