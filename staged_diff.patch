@@ -1,0 +1,46 @@
+diff --git a/frontend/src/components/TaskPage.js b/frontend/src/components/TaskPage.js
+index 970e19c..ebe8e34 100644
+--- a/frontend/src/components/TaskPage.js
++++ b/frontend/src/components/TaskPage.js
+@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
+ import {useNavigate} from 'react-router-dom';
+ import {fetchTasks} from '../api';
+ import {Tooltip} from "react-tooltip";
++import {formatTimestamp} from "../utils"
+ 
+ const TaskPage = () => {
+     const [tasks, setTasks] = useState([]);
+@@ -53,6 +54,7 @@ const TaskPage = () => {
+                     <tr>
+                         <th>Filename</th>
+                         <th>Status</th>
++                        <th>Upload Time</th>
+                         <th>Download</th>
+                     </tr>
+                     </thead>
+@@ -65,6 +67,7 @@ const TaskPage = () => {
+                                     : task.filename}
+                             </td>
+                             <td>{statusMap[task.status] || 'Unknown Status'}</td>
++                            <td>{formatTimestamp(task.created_at) || 'Unknown Created Time'}</td>
+                             <td>
+                                 {task.link ? (
+                                     <a
+diff --git a/frontend/src/utils.js b/frontend/src/utils.js
+index cf7d902..3023cd6 100644
+--- a/frontend/src/utils.js
++++ b/frontend/src/utils.js
+@@ -63,3 +63,13 @@ export const logout = () => {
+     localStorage.removeItem('token');
+ };
+ 
++export function formatTimestamp(timestamp) {
++    if (!timestamp) return 'Invalid Time';
++
++    const date = new Date(timestamp);
++    if (isNaN(date.getTime())) return 'Invalid Time';
++
++    return date.toLocaleString();
++}
++
++
