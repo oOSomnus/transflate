@@ -63,3 +63,13 @@ export const logout = () => {
     localStorage.removeItem('token');
 };
 
+export function formatTimestamp(timestamp) {
+    if (!timestamp) return 'Invalid Time';
+
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Invalid Time';
+
+    return date.toLocaleString();
+}
+
+

@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {fetchTasks} from '../api';
 import {Tooltip} from "react-tooltip";
+import {formatTimestamp} from "../utils"
 
 const TaskPage = () => {
     const [tasks, setTasks] = useState([]);
@@ -53,6 +54,7 @@ const TaskPage = () => {
                     <tr>
                         <th>Filename</th>
                         <th>Status</th>
+                        <th>Upload Time</th>
                         <th>Download</th>
                     </tr>
                     </thead>
@@ -65,6 +67,7 @@ const TaskPage = () => {
                                     : task.filename}
                             </td>
                             <td>{statusMap[task.status] || 'Unknown Status'}</td>
+                            <td>{formatTimestamp(task.created_at) || 'Unknown Created Time'}</td>
                             <td>
                                 {task.link ? (
                                     <a
