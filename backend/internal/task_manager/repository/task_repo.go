@@ -69,9 +69,10 @@ func (r *RedisTaskRepository) SetTaskState(
 	if exists == 0 {
 		// key does not exist -> create and insert filename
 		hm := map[string]interface{}{
-			"status":   status,
-			"filename": filename,
-			"link":     "", // 初始空
+			"status":     status,
+			"filename":   filename,
+			"link":       "", // init to empty
+			"created_at": time.Now().Format(time.RFC3339),
 		}
 		if err := r.client.HSet(ctx, key, hm).Err(); err != nil {
 			return err
@@ -185,9 +186,10 @@ func (r *RedisTaskRepository) FetchAllTask(ctx context.Context, username string)
 		fmt.Sscanf(vals["status"], "%d", &statusInt)
 
 		tmp := map[string]interface{}{
-			"status":   statusInt,
-			"filename": vals["filename"],
-			"link":     vals["link"],
+			"status":     statusInt,
+			"filename":   vals["filename"],
+			"link":       vals["link"],
+			"created_at": vals["created_at"],
 		}
 		result[taskId] = tmp
 	}
